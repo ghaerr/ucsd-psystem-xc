@@ -18,13 +18,7 @@
 
 #include <lib/ac/math.h>
 #include <fcntl.h>
-#include <libexplain/close.h>
-#include <libexplain/creat.h>
-#include <libexplain/fstat.h>
-#include <libexplain/open.h>
-#include <libexplain/output.h>
-#include <libexplain/read.h>
-#include <libexplain/write.h>
+#include <sys/stat.h>
 
 #include <lib/bitmap/raw.h>
 
@@ -52,23 +46,24 @@ bitmap_raw::create(const rcstring &a_filename)
 void
 bitmap_raw::read(unsigned &width, unsigned &height, unsigned char *&data)
 {
-    int ifd = explain_open_or_die(filename.c_str(), O_RDONLY, 0);
+    int ifd = open(filename.c_str(), O_RDONLY, 0);
     struct stat st;
-    explain_fstat_or_die(ifd, &st);
+    fstat(ifd, &st);
     bool size_warning = false;
     if (st.st_size >= 65536)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: there is no way a file of size %ld can fit into the "
                 "memory of a UCSD Pascal system; aborting",
             filename.c_str(),
             (long)st.st_size
         );
+        exit(1);
     }
     if (st.st_size & 511)
     {
-        explain_output_warning
+        printf
         (
             "%s: UCSD Pascal bitmap image files are usually a multiple of 512 "
                 "bytes in size, but this file is %ld bytes (r=%d), so "
@@ -91,7 +86,7 @@ bitmap_raw::read(unsigned &width, unsigned &height, unsigned char *&data)
         off_t expect = row_bytes * height;
         if (st.st_size < expect)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: an image of --size=%dx%d requires a bitmap file of at "
                    "least %ld bytes, but this file is only %ld bytes; aborting",
@@ -101,12 +96,13 @@ bitmap_raw::read(unsigned &width, unsigned &height, unsigned char *&data)
                 expect,
                 (long)st.st_size
             );
+            exit(1);
         }
         expect = (expect + 511) >> 9;
         expect <<= 9;
         if (st.st_size != expect && !size_warning)
         {
-            explain_output_warning
+            printf
             (
                 "%s: an image of --size=%dx%d requires a file size of %d "
                     "whole 512-byte blocks, giving a size of %ld bytes, "
@@ -145,7 +141,7 @@ bitmap_raw::read(unsigned &width, unsigned &height, unsigned char *&data)
             width = sq_width;
             height = sq_height;
         }
-        explain_output_error
+        printf
         (
             "%s: guessing --size=%dx%d for this image",
             filename.c_str(),
@@ -158,19 +154,19 @@ bitmap_raw::read(unsigned &width, unsigned &height, unsigned char *&data)
     // read in the .foto data
     //
     data = new unsigned char [st.st_size];
-    explain_read_or_die(ifd, data, st.st_size);
-    explain_close_or_die(ifd);
+    ::read(ifd, data, st.st_size);
+    close(ifd);
 }
 
 
 void
 bitmap_raw::write(unsigned width, unsigned height, const unsigned char *data)
 {
-    int fd = explain_creat_or_die(filename.c_str(), 0666);
+    int fd = creat(filename.c_str(), 0666);
     unsigned row_bytes = (width + 7) / 8;
     unsigned data_size = row_bytes * height;
-    explain_write_or_die(fd, data, data_size);
-    explain_close_or_die(fd);
+    ::write(fd, data, data_size);
+    close(fd);
 }
 
 

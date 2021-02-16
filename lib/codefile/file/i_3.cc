@@ -18,7 +18,6 @@
 
 #include <lib/config.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/codefile/file/i_3.h>
 #include <lib/debug.h>
@@ -60,12 +59,13 @@ codefile_file_i_3::codefile_file_i_3(const rcstring &a_filename) :
         DEBUG(1, "failed segment names test");
 
         yuck:
-        explain_output_error_and_die
+        printf
         (
             "the %s file does not look like a UCSD p-System I.3 codefile, "
             "unable to locate a valid segment dictionary in block 0",
             get_filename().quote_c().c_str()
         );
+        exit(1);
     }
 
     //
@@ -286,7 +286,7 @@ codefile_file_i_3::new_segment(const rcstring &name, int segnum,
     assert(segnum >= 0);
     if (segnum < 0 || segnum >= 16)
     {
-        explain_output_error_and_die
+        printf
         (
             "the %s file may only contain segment numbers in the range 0..15, "
                 "segment %d %s cannot be stored in an I.3 codefile",
@@ -294,6 +294,7 @@ codefile_file_i_3::new_segment(const rcstring &name, int segnum,
             segnum,
             name.quote_c().c_str()
         );
+        exit(1);
     }
     DEBUG(2, "segkind = %s", segkind_name(segkind).c_str());
     switch (segkind)
@@ -309,7 +310,7 @@ codefile_file_i_3::new_segment(const rcstring &name, int segnum,
     case UNLINKED_INTRINS:
     case DATASEG:
     default:
-        explain_output_error_and_die
+        printf
         (
             "the %s file may only contain LINKED segments, "
                 "segment %d %s cannot be stored in an I.3 codefile",
@@ -317,6 +318,7 @@ codefile_file_i_3::new_segment(const rcstring &name, int segnum,
             segnum,
             name.quote_c().c_str()
         );
+        exit(1);
         break;
     }
     DEBUG(2, "mtype = %s", mtype_name(mtype).c_str());
@@ -418,7 +420,7 @@ codefile_file_i_3::get_segment(unsigned n)
 void
 codefile_file_i_3::create_dataseg(const rcstring &segname, int segnum, int)
 {
-    explain_output_error_and_die
+    printf
     (
         "the %s file may only contain LINKED segments, "
             "segment %d %s cannot be stored in an I.3 codefile",
@@ -426,6 +428,7 @@ codefile_file_i_3::create_dataseg(const rcstring &segname, int segnum, int)
         segnum,
         segname.quote_c().c_str()
     );
+    exit(1);
 }
 
 

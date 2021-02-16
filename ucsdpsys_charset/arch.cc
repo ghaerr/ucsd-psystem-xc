@@ -18,7 +18,6 @@
 
 #include <lib/ac/ctype.h>
 #include <lib/ac/stdio.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_charset/arch.h>
 

@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 #include <unistd.h>
 
 #include <lib/codefile.h>
@@ -49,11 +48,12 @@ codefile::new_segment(const rcstring &name, bool syscomp)
     int segnum = next_free_segment_number(syscomp);
     if (segnum < 0)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: too many segments",
             get_filename().c_str()
         );
+        exit(1);
     }
 
     //

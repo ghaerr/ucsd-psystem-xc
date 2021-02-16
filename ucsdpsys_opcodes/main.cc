@@ -22,8 +22,6 @@
 #include <lib/ac/string.h>
 #include <fcntl.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/rcstring.h>
@@ -35,7 +33,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_opcodes";
     fprintf(stderr, "Usage: %s -d [ <infile> [ <outfile> ]]\n", prog);
     fprintf(stderr, "       %s -e [ <infile> [ <outfile> ]]\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
@@ -46,8 +44,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     srandom(time(0) + getpid());
     arch::pointer ap;
     typedef void (arch::*method_t)(const rcstring &, const rcstring &);
@@ -104,7 +100,8 @@ main(int argc, char **argv)
     }
     if (!ap)
     {
-        explain_output_error_and_die("no architecture specified");
+        printf("no architecture specified");
+        exit(1);
     }
     rcstring ifn = "-";
     rcstring ofn = "-";

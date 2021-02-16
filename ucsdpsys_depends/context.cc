@@ -17,8 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/fclose.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_depends/context.h>
 
@@ -27,7 +25,7 @@ context::~context()
 {
     if (ifp)
     {
-        explain_fclose_or_die(ifp);
+        fclose(ifp);
         ifp = 0;
     }
 }
@@ -51,13 +49,14 @@ context::create(const rcstring &a_ifn, FILE *a_ifp)
 void
 context::fatal_error(const char *str)
 {
-    explain_output_error_and_die
+    printf
     (
         "%s: %d: %s",
         ifn.c_str(),
         line_number,
         str
     );
+    exit(1);
 }
 
 

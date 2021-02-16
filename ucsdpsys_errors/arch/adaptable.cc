@@ -18,14 +18,6 @@
 
 #include <lib/config.h>
 #include <lib/ac/string.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fgets.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fread.h>
-#include <libexplain/fwrite.h>
-#include <libexplain/output.h>
-
 
 #include <ucsdpsys_errors/arch/adaptable.h>
 
@@ -58,13 +50,13 @@ arch_adaptable::read_text(const rcstring &filename)
         ?
             stdin
         :
-            explain_fopen_or_die(filename.c_str(), "r")
+            fopen(filename.c_str(), "r")
         );
     int linum = 0;
     for (;;)
     {
         char line[1000];
-        if (!explain_fgets_or_die(line, sizeof(line), fp))
+        if (!fgets(line, sizeof(line), fp))
             break;
         ++linum;
         if (line[0] == '#')
@@ -78,43 +70,47 @@ arch_adaptable::read_text(const rcstring &filename)
             long n = strtol(number.c_str(), &end, 10);
             if (end == number.c_str() || *end)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: %d: error number malformed",
                     filename.c_str(),
                     linum
                 );
+                exit(1);
             }
             if (n < 0 || (get_string_length() + 2) * n > 32767)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: %d: error number %ld out of range",
                     filename.c_str(),
                     linum,
                     n
                 );
+                exit(1);
             }
             size_t un = n;
             if (un < data.size() && !data[un].empty())
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: %d: error number %ld duplicate",
                     filename.c_str(),
                     linum,
                     n
                 );
+                exit(1);
             }
             if (text.size() > get_string_length())
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: %d: text too long, by %d",
                     filename.c_str(),
                     linum,
                     int(text.size() - get_string_length())
                 );
+                exit(1);
             }
             while (data.size() <= un)
                 data.push_back(rcstring());
@@ -125,16 +121,17 @@ arch_adaptable::read_text(const rcstring &filename)
             rcstring text = rcstring(line).trim();
             if (!text.empty())
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: %d: error number missing",
                     filename.c_str(),
                     linum
                 );
+                exit(1);
             }
         }
     }
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
@@ -155,7 +152,7 @@ arch_adaptable::read_binary(const rcstring &filename)
         ?
             stdin
         :
-            explain_fopen_or_die(filename.c_str(), "rb")
+            fopen(filename.c_str(), "rb")
         );
     data.clear();
     size_t nbytes = 1 + get_string_length();
@@ -165,18 +162,20 @@ arch_adaptable::read_binary(const rcstring &filename)
     for (unsigned n = 0; n < 32767; ++n)
     {
         unsigned char line[256];
-        size_t m = explain_fread_or_die(line, 1, nbytes, fp);
+        size_t m = fread(line, 1, nbytes, fp);
         if (!m)
             break;
-        if (m != nbytes)
-            explain_output_error_and_die("%s: short file", filename.c_str());
+        if (m != nbytes) {
+            printf("%s: short file", filename.c_str());
+            exit(1);
+        }
         size_t len = line[0];
         if (len + 1 > nbytes)
             len = nbytes - 1;
         rcstring text = rcstring(line + 1, len).trim();
         data.push_back(text);
     }
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
@@ -190,7 +189,7 @@ arch_adaptable::write_text(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "w")
+            fopen(filename.c_str(), "w")
         );
     for (size_t j = 0; j < data.size(); ++j)
     {
@@ -198,9 +197,9 @@ arch_adaptable::write_text(const rcstring &filename)
         if (!s.empty())
             fprintf(fp, "%3d: %s\n", int(j), s.c_str());
     }
-    explain_fflush_or_die(fp);
+    fflush(fp);
     if (fp != stdout)
-        explain_fclose_or_die(fp);
+        fclose(fp);
 }
 
 
@@ -214,7 +213,7 @@ arch_adaptable::write_binary(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "wb")
+            fopen(filename.c_str(), "wb")
         );
     size_t nbytes = 1 + get_string_length();
     if (nbytes & 1)
@@ -232,11 +231,11 @@ arch_adaptable::write_binary(const rcstring &filename)
         memset(line, 0, nbytes);
         line[0] = len;
         memcpy(line + 1, s.c_str(), len);
-        explain_fwrite_or_die(line, 1, nbytes, fp);
+        fwrite(line, 1, nbytes, fp);
     }
-    explain_fflush_or_die(fp);
+    fflush(fp);
     if (fp != stdout)
-        explain_fclose_or_die(fp);
+        fclose(fp);
 }
 
 

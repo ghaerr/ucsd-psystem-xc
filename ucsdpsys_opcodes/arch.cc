@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_opcodes/arch.h>
 
@@ -61,7 +60,8 @@ arch::flip_byte_sex(void)
 void
 arch::no_function_specified(const rcstring &, const rcstring &)
 {
-    explain_output_error_and_die("no function specified on the command line");
+    printf("no function specified on the command line");
+    exit(1);
 }
 
 

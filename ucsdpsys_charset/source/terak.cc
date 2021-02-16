@@ -18,13 +18,6 @@
 
 #include <lib/ac/assert.h>
 #include <lib/ac/sys/stat.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fread.h>
-#include <libexplain/fseek.h>
-#include <libexplain/fstat.h>
-#include <libexplain/output.h>
-#include <libexplain/stat.h>
 
 #include <lib/get_filename.h>
 
@@ -33,7 +26,7 @@
 
 source_terak::~source_terak()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -42,7 +35,7 @@ static off_t
 filesize(FILE *fp)
 {
     struct stat st;
-    explain_fstat_or_die(fileno(fp), &st);
+    fstat(fileno(fp), &st);
     return st.st_size;
 }
 
@@ -54,14 +47,14 @@ source_terak::source_terak(const rcstring &a_filename) :
     if (looks_like_a_stdin_synonym(filename))
         filename = filename_from_stream(stdin);
     else
-        fp = explain_fopen_or_die(filename.c_str(), "rb");
+        fp = fopen(filename.c_str(), "rb");
     assert(fp);
 
     off_t fs = filesize(fp);
     unsigned nblocks = fs >> 9;
     if ((fs & 511) != 0 || nblocks < 4 || nblocks > 6)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: the unlikely file size (%ld = 0x%04lX) does not appear to be "
                 "consistent a terak system.charset file",
@@ -69,6 +62,7 @@ source_terak::source_terak(const rcstring &a_filename) :
             (long)fs,
             (long)fs
         );
+        exit(1);
     }
 }
 
@@ -84,7 +78,7 @@ static off_t
 filesize(const rcstring &filename)
 {
     struct stat st;
-    explain_stat_or_die(filename.c_str(), &st);
+    stat(filename.c_str(), &st);
     return st.st_size;
 }
 
@@ -124,18 +118,19 @@ source_terak::read_one_glyph(void)
         {
             if (pos % 10)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: 0x%04X: format error, incorrect alignment",
                     filename.c_str(),
                     addr
                 );
+                exit(1);
             }
             unsigned c = (page * 128) + ' ' + (pos / 10);
             assert(c < 256);
 
             unsigned char data[10];
-            explain_fread_or_die(data, 1, sizeof(data), fp);
+            fread(data, 1, sizeof(data), fp);
             glyph::pointer gp = glyph::create(c, 8, sizeof(data), data);
             gp->set_location
             (
@@ -143,7 +138,7 @@ source_terak::read_one_glyph(void)
             );
             return gp;
         }
-        explain_fseek_or_die(fp, (page + 1) * 0x0400, SEEK_SET);
+        fseek(fp, (page + 1) * 0x0400, SEEK_SET);
     }
 }
 
@@ -161,8 +156,8 @@ source_terak::get_boot_logo(unsigned char *data)
 {
     if (filesize(fp) < 0xA00)
         return false;
-    explain_fseek_or_die(fp, 0x800, SEEK_SET);
-    explain_fread_or_die(data, 1, 512, fp);
+    fseek(fp, 0x800, SEEK_SET);
+    fread(data, 1, 512, fp);
     return true;
 }
 

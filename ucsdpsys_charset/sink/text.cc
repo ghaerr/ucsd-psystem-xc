@@ -17,9 +17,6 @@
 //
 
 #include <lib/ac/assert.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
 
 #include <ucsdpsys_charset/pretty_char_name.h>
 #include <ucsdpsys_charset/sink/text.h>
@@ -27,7 +24,7 @@
 
 sink_text::~sink_text()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -48,7 +45,7 @@ sink_text::create(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "w")
+            fopen(filename.c_str(), "w")
         );
     return pointer(new sink_text(fp));
 }
@@ -120,7 +117,7 @@ sink_text::write_one_glyph(const glyph::pointer &gp)
 void
 sink_text::write_whole_font_end(void)
 {
-    explain_fflush_or_die(fp);
+    fflush(fp);
 }
 
 

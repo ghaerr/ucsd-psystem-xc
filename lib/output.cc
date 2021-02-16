@@ -19,7 +19,6 @@
 #include <lib/config.h>
 #include <lib/ac/assert.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/output.h>
 #include <lib/rcstring.h>
@@ -40,11 +39,12 @@ output::~output()
         //
         // We can't call flush, for the same reason.
         //
-        explain_output_error_and_die
+        printf
         (
             "you forgot to call output::flush in the destructor of a derived "
             "output class (bug)"
         );
+        exit(1);
     }
 
     assert(buffer);

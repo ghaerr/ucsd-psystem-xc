@@ -16,11 +16,8 @@
 // with this program. If not, see <http://www.gnu.org/licenses/>
 //
 
+#include <stdio.h>
 #include <lib/ac/stdlib.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
 
 #include <lib/cardinal.h>
 #include <lib/long_integer.h>
@@ -41,7 +38,7 @@ void
 lex_open(const char *filename)
 {
     fn = filename;
-    fp = explain_fopen_or_die(filename, "r");
+    fp = fopen(filename, "r");
     line_number = 1;
     crank_line_number = false;
     number_of_errors = 0;
@@ -61,10 +58,11 @@ lex_close(void)
                 cardinal(number_of_errors).c_str(),
                 (number_of_errors == 1 ? "" : "s")
             );
-        explain_output_message(msg.c_str());
-        explain_output_exit_failure();
+        printf(msg.c_str());
+        //explain_output_exit_failure();
+        exit(1);
     }
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fn.clear();
 }
 
@@ -72,7 +70,7 @@ lex_close(void)
 static bool
 next_is(char expect)
 {
-    int c = explain_getc_or_die(fp);
+    int c = getc(fp);
     if (c == EOF)
         return false;
     if (c == expect)
@@ -93,7 +91,7 @@ grammar_lex(void)
             crank_line_number = false;
         }
 
-        int c = explain_getc_or_die(fp);
+        int c = getc(fp);
         switch(c)
         {
         case EOF:
@@ -120,7 +118,7 @@ grammar_lex(void)
             // comment
             for (;;)
             {
-                c = explain_getc_or_die(fp);
+                c = getc(fp);
                 if (c == EOF || c == '\n')
                     break;
             }
@@ -154,7 +152,7 @@ grammar_lex(void)
                 for (;;)
                 {
                     ac.push_back((char)c);
-                    c = explain_getc_or_die(fp);
+                    c = getc(fp);
                     switch (c)
                     {
                     case EOF:
@@ -204,7 +202,7 @@ grammar_error(const char *text)
 {
     rcstring msg =
         rcstring::printf("%s: %d: %s", fn.c_str(), line_number, text);
-    explain_output_message(msg.c_str());
+    printf(msg.c_str());
     ++number_of_errors;
 }
 

@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_charset/source.h>
 
@@ -50,17 +49,18 @@ source::read_whole_font(void)
         glyph::pointer gp2 = result->get_glyph(gp->get_number());
         if (gp2)
         {
-            explain_output_error
+            printf
             (
                 "%sduplicate glyph %s definition...",
                 gp->get_location().c_str(),
                 gp->get_number_pretty().c_str()
             );
-            explain_output_error_and_die
+            printf
             (
                 "%s...here is the first defintion",
                 gp2->get_location().c_str()
             );
+            exit(1);
         }
 
         //

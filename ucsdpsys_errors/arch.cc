@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_errors/arch.h>
 
@@ -52,7 +51,8 @@ arch::decode(const rcstring &infile, const rcstring &outfile)
 void
 arch::no_function_specified(const rcstring &, const rcstring &)
 {
-    explain_output_error_and_die("no function specified on command line");
+    printf("no function specified on command line");
+    exit(1);
 }
 
 

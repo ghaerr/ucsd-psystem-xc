@@ -18,7 +18,6 @@
 
 #include <lib/config.h>
 #include <lib/sizeof.h>
-#include <libexplain/output.h>
 
 #include <lib/fstrcmp.h>
 
@@ -71,18 +70,20 @@ sink::factory_by_name(const rcstring &format_name, const rcstring &filename)
     }
     if (best)
     {
-        explain_output_error_and_die
+        printf
         (
             "output format %s unknown, did you mean \"%s\" instead?",
             format_name.quote_c().c_str(),
             best->format_name
         );
+        exit(1);
     }
-    explain_output_error_and_die
+    printf
     (
         "output format %s unknown",
         format_name.quote_c().c_str()
     );
+    exit(1);
     // NOTREACHED
     return sink::pointer();
 }

@@ -18,7 +18,6 @@
 
 #include <lib/ac/stdio.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/codefile.h>
 #include <lib/link_info.h>
@@ -406,12 +405,13 @@ link_info::sanity_check(const rcstring &caption)
 {
     if (name != name.identifier())
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: link info has non-alpha name %s",
             caption.c_str(),
             name.quote_c().c_str()
         );
+        exit(1);
     }
     static const int maxproc = 160;
     static const int maxic = 20000;
@@ -427,13 +427,14 @@ link_info::sanity_check(const rcstring &caption)
     case UNITREF:
         if (references.empty() || references.size() > 500)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: too many references (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 (int)references.size()
             );
+            exit(1);
         }
         switch (format)
         {
@@ -443,13 +444,14 @@ link_info::sanity_check(const rcstring &caption)
             break;
 
         default:
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad format (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 format
             );
+            exit(1);
         }
         break;
 
@@ -475,23 +477,25 @@ link_info::sanity_check(const rcstring &caption)
     case PRIVREF:
         if (nwords <= 0)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad private (%d) too small",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 nwords
             );
+            exit(1);
         }
         if (nwords > maxlc)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad private (%d) too large",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 nwords
             );
+            exit(1);
         }
         break;
 
@@ -501,36 +505,39 @@ link_info::sanity_check(const rcstring &caption)
     case GLOBDEF:
         if (homeproc <= 0 || homeproc > maxproc)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad homeproc (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 homeproc
             );
+            exit(1);
         }
         if (icoffset < 0 || icoffset > maxic)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad icoffset (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 icoffset
             );
+            exit(1);
         }
         break;
 
     case PUBLDEF:
         if (baseoffset <= 0 || baseoffset > maxlc)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad baseoffset (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 baseoffset
             );
+            exit(1);
         }
         break;
 
@@ -540,23 +547,25 @@ link_info::sanity_check(const rcstring &caption)
     case SEPFUNC:
         if (srcproc <= 0 || srcproc > maxproc)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad srcproc (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 srcproc
             );
+            exit(1);
         }
         if (nparams < 0 || nparams > 100)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad nparams (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 nparams
             );
+            exit(1);
         }
         break;
 
@@ -566,13 +575,14 @@ link_info::sanity_check(const rcstring &caption)
     case EOFMARK:
         if (nextlc <= 0 || nextlc > maxlc)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: link info %s: bad nextlc (%d)",
                 caption.c_str(),
                 name.quote_c().c_str(),
                 nextlc
             );
+            exit(1);
         }
         break;
     }

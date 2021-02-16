@@ -16,12 +16,18 @@
 // with this program. If not, see <http://www.gnu.org/licenses/>
 //
 
+#include <unistd.h>
 #include <lib/get_filename.h>
 
 
 rcstring
 filename_from_stream(FILE *fp)
 {
+#if 1
+// this function called only from charset converter and
+// filename is informative only
+    return "unknown";
+#else
     char buffer[2000];
     if (explain_filename_from_stream(fp, buffer, sizeof(buffer)) < 0)
     {
@@ -41,7 +47,7 @@ filename_from_stream(FILE *fp)
     }
 
     // grab the current directory
-    explain_getcwd_or_die(buffer, sizeof(buffer));
+    getcwd(buffer, sizeof(buffer));
     rcstring dot(buffer);
 
     // is it the current directory?
@@ -61,6 +67,7 @@ filename_from_stream(FILE *fp)
 
     // just use the sobsolute path
     return absolute;
+#endif
 }
 
 

@@ -20,7 +20,6 @@
 #include <lib/ac/ctype.h>
 #include <lib/ac/stdio.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 #include <unistd.h>
 
 #include <lib/cardinal.h>
@@ -322,12 +321,13 @@ pascal_lex_error_summary(void)
     {
         int style = cardinal_style_all;
         pascal_grammar_fail_hook();
-        explain_output_error_and_die
+        printf
         (
             "found %s fatal error%s",
             cardinal(number_of_errors, style).c_str(),
             (number_of_errors == 1 ? "" : "s")
         );
+        exit(1);
     }
 }
 
@@ -417,7 +417,8 @@ pascal_lex_error_v(const location &loc, const char *fmt, va_list ap)
     rcstring msg(an_from_a(rcstring::vprintf(fmt, ap)));
 
     rcstring locn = (loc.empty() ? curloc : loc).representation();
-    explain_output_error("%s: %s", locn.c_str(), msg.c_str());
+    printf("%s: %s", locn.c_str(), msg.c_str());
+    exit(1);
 
     // Don't bump the error count for the second line of error messages;
     // continuation lines start with "..."
@@ -447,7 +448,8 @@ pascal_lex_error_v(const location &loc, const char *fmt, va_list ap)
     if (!src)
     {
         pascal_grammar_fail_hook();
-        explain_output_exit_failure();
+        //explain_output_exit_failure();
+        exit(1);
     }
 }
 
@@ -485,7 +487,7 @@ pascal_lex_warning_v(const location &loc, const char *fmt, va_list ap)
     if (pascal_grammar_warnings_are_silent())
         return;
     rcstring locn = (loc.empty() ? curloc : loc).representation();
-    explain_output_error("%s: warning: %s", locn.c_str(), msg.c_str());
+    printf("%s: warning: %s", locn.c_str(), msg.c_str());
 }
 
 
@@ -526,7 +528,7 @@ pascal_lex_trace_print(void *, const char *fmt, ...)
         if (!ep)
             return;
         len = ep - buffer;
-        explain_output_error
+        printf
         (
             "%s: %.*s",
             src->name_and_line().c_str(),

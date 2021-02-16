@@ -19,7 +19,6 @@
 #include <lib/config.h>
 #include <lib/ac/assert.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/codefile/file.h>
 #include <lib/debug.h>
@@ -222,8 +221,10 @@
 
 translator_compile::~translator_compile()
 {
-    if (number_of_errors > 0)
-        explain_output_error_and_die("Found %d fatal errors", number_of_errors);
+    if (number_of_errors > 0) {
+        printf("Found %d fatal errors", number_of_errors);
+        exit(1);
+    }
 }
 
 
@@ -361,7 +362,7 @@ translator_compile::error(const location &loc, const char *fmt, ...)
     va_start(ap, fmt);
     rcstring s = rcstring::vprintf(fmt, ap);
     va_end(ap);
-    explain_output_error
+    printf
     (
         "%s: %d: %s",
         loc.get_file_name().c_str(),

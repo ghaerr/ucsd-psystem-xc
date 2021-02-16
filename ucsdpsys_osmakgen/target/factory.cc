@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_osmakgen/target/build/cook.h>
 #include <ucsdpsys_osmakgen/target/build/makefile.h>
@@ -33,11 +32,12 @@ target::factory(const rcstring &filename)
         return target_build_makefile::create(filename);
     if (filename.gmatch("*debian*"))
         return target_debian::create(filename);
-    explain_output_error_and_die
+    printf
     (
         "do not know how to generate a %s file",
         filename.quote_c().c_str()
     );
+    exit(1);
     return pointer();
 }
 

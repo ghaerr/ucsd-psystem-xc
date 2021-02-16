@@ -18,7 +18,6 @@
 
 #include <lib/config.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/cardinal.h>
 #include <lib/output/filter/prefix.h>

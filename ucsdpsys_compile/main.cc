@@ -20,8 +20,6 @@
 #include <lib/ac/stdlib.h>
 #include <lib/ac/string.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/debug.h>
@@ -39,7 +37,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_compile";
     fprintf(stderr, "Usage: %s [ <option>... ] <input-file-name>\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -68,8 +66,6 @@ int
 main(int argc, char **argv)
 {
     set_segfault_handler();
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     time_value start;
     start.get_time_of_day();
     rcstring output_file_name;
@@ -270,7 +266,7 @@ main(int argc, char **argv)
         if (finish <= time_value(0))
             finish = time_value(1);
         double lps = pascal_lex_number_of_lines() / double(finish);
-        explain_output_error
+        printf
         (
             "%s lines per second",
             pretty_quantity(lps).c_str()

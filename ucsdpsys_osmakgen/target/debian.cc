@@ -18,10 +18,6 @@
 
 #include <lib/ac/sys/stat.h>
 
-#include <libexplain/chmod.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-
 #include <lib/pascal_id.h>
 
 #include <ucsdpsys_osmakgen/target/debian.h>
@@ -61,7 +57,7 @@ target_debian::generate(const rcstring_list &)
 void
 target_debian::generate_changelog(void)
 {
-    FILE *fp = explain_fopen_or_die("debian/changelog", "w");
+    FILE *fp = fopen("debian/changelog", "w");
     rcstring project_name = "ucsd-psystem-os";
     fprintf
     (
@@ -93,7 +89,7 @@ target_debian::generate_changelog(void)
     );
     fprintf(fp, "\n");
 
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
@@ -101,14 +97,14 @@ void
 target_debian::generate_compat(void)
 {
     mkdir("debian", 0755);
-    FILE *fp = explain_fopen_or_die("debian/compat", "w");
+    FILE *fp = fopen("debian/compat", "w");
     fprintf(fp, "5\n");
-    explain_fclose_or_die(fp);
+    fclose(fp);
 
     mkdir("debian/source", 0755);
-    fp = explain_fopen_or_die("debian/source/format", "w");
+    fp = fopen("debian/source/format", "w");
     fprintf(fp, "1.0\n");
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
@@ -119,7 +115,7 @@ target_debian::generate_control(void)
     rcstring source_name = "ucsd-psystem-os";
     rcstring bin_name = source_name;
 
-    FILE *fp = explain_fopen_or_die("debian/control", "w");
+    FILE *fp = fopen("debian/control", "w");
     fprintf(fp, "Source: %s\n", source_name.c_str());
 
     rcstring section = "utils";
@@ -172,7 +168,7 @@ target_debian::generate_control(void)
     depends_list.sort();
     fprintf(fp, "Depends: %s\n", depends_list.unsplit(", ").c_str());
 
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
@@ -181,16 +177,16 @@ target_debian::generate_install(void)
 {
     rcstring project_name = "ucsd-psystem-os";
     rcstring filename = "debian/" + project_name + ".install";
-    FILE *fp = explain_fopen_or_die(filename.c_str(), "w");
+    FILE *fp = fopen(filename.c_str(), "w");
     fprintf(fp, "usr/share/%s\n", project_name.c_str());
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
 void
 target_debian::generate_copyright(void)
 {
-    FILE *fp = explain_fopen_or_die("debian/copyright", "w");
+    FILE *fp = fopen("debian/copyright", "w");
     fprintf
     (
         fp,
@@ -225,14 +221,14 @@ target_debian::generate_copyright(void)
         "PARTICULAR PURPOSE, OR THAT THE USE OF UCSD PASCAL WILL NOT INFRINGE\n"
         "ANY PATENT, TRADEMARK OR OTHER RIGHTS.\n"
     );
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
 void
 target_debian::generate_rules(void)
 {
-    FILE *fp = explain_fopen_or_die("debian/rules", "w");
+    FILE *fp = fopen("debian/rules", "w");
     fprintf
     (
         fp,
@@ -299,10 +295,10 @@ target_debian::generate_rules(void)
         "\n"
         ".PHONY: build clean binary-indep binary-arch binary install\n"
     );
-    explain_fclose_or_die(fp);
+    fclose(fp);
 
     // make sure it is executable
-    explain_chmod_or_die("debian/rules", 0755);
+    chmod("debian/rules", 0755);
 }
 
 

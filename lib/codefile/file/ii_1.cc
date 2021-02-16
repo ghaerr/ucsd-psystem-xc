@@ -18,7 +18,6 @@
 
 #include <lib/config.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/codefile/file/ii_1.h>
 #include <lib/debug.h>
@@ -59,12 +58,13 @@ codefile_file_ii_1::codefile_file_ii_1(const rcstring &a_filename) :
         DEBUG(1, "failed segment names test");
 
         yuck:
-        explain_output_error_and_die
+        printf
         (
             "the %s file does not look like a UCSD p-System II.1 codefile, "
                 "unable to locate a valid segment dictionary in block 0",
             get_filename().quote_c().c_str()
         );
+        exit(1);
     }
 
     //
@@ -508,13 +508,14 @@ codefile_file_ii_1::write_segment_dictionary(void)
 
     if (segments.size() > 16)
     {
-        explain_output_error_and_die
+        printf
         (
             "the %s file is unable to cope with %ld segments, "
                 "the II.1 format can only store 16 segments each",
             get_filename().quote_c().c_str(),
             (long)segments.size()
         );
+        exit(1);
     }
 
     //

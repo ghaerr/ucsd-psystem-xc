@@ -18,13 +18,6 @@
 
 #include <lib/ac/ctype.h>
 #include <lib/ac/string.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fread.h>
-#include <libexplain/fwrite.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
 
 #include <lib/rcstring/accumulator.h>
 
@@ -58,23 +51,24 @@ arch_adaptable::read_binary(const rcstring &filename)
         ?
             stdin
         :
-            explain_fopen_or_die(filename.c_str(), "rb")
+            fopen(filename.c_str(), "rb")
         );
     bool first = true;
     for (;;)
     {
         unsigned char data[12];
-        size_t n = explain_fread_or_die(data, 1, sizeof(data), fp);
+        size_t n = fread(data, 1, sizeof(data), fp);
         if (n == 0)
             break;
         if (n != sizeof(data))
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: size is not an exact multiple of %d",
                 filename.c_str(),
                 (int)sizeof(data)
             );
+            exit(1);
         }
         const unsigned char *ep = data + 8;
         while (ep > data && (ep[-1] == ' ' || ep[-1] == '\0'))
@@ -96,7 +90,7 @@ arch_adaptable::read_binary(const rcstring &filename)
         opcodes.push_back(oprec(opname, opvalue, opatrib));
     }
     if (fp != stdin)
-        explain_fclose_or_die(fp);
+        fclose(fp);
 }
 
 
@@ -110,7 +104,7 @@ arch_adaptable::write_binary(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "wb")
+            fopen(filename.c_str(), "wb")
         );
 
     // The first record is magic:
@@ -119,7 +113,7 @@ arch_adaptable::write_binary(const rcstring &filename)
         unsigned char data[12];
         memset(data, 0, sizeof(data));
         put_word(data + 8, 1);
-        explain_fwrite_or_die(data, 1, sizeof(data), fp);
+        fwrite(data, 1, sizeof(data), fp);
     }
 
     for
@@ -137,11 +131,11 @@ arch_adaptable::write_binary(const rcstring &filename)
         memcpy(data, temp.c_str(), 8);
         put_word(data + 8, x.opvalue);
         put_word(data + 10, x.opatrib);
-        explain_fwrite_or_die(data, 1, sizeof(data), fp);
+        fwrite(data, 1, sizeof(data), fp);
     }
-    explain_fflush_or_die(fp);
+    fflush(fp);
     if (fp != stdout)
-        explain_fclose_or_die(fp);
+        fclose(fp);
 }
 
 
@@ -155,7 +149,7 @@ arch_adaptable::write_text(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "w")
+            fopen(filename.c_str(), "w")
         );
 
     // figure out the name column width
@@ -197,9 +191,9 @@ arch_adaptable::write_text(const rcstring &filename)
             atribute_name(x.opatrib).c_str()
         );
     }
-    explain_fflush_or_die(fp);
+    fflush(fp);
     if (fp != stdout)
-        explain_fclose_or_die(fp);
+        fclose(fp);
 }
 
 
@@ -357,14 +351,16 @@ parse_error(const char *fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
 
-    explain_output_error_and_die("%s: %d: %s", ifn.c_str(), linum, buffer);
+    printf("%s: %d: %s", ifn.c_str(), linum, buffer);
+    exit(1);
 }
 
 
 static void
 syntax_error(void)
 {
-    explain_output_error_and_die("%s: %d: syntax error", ifn.c_str(), linum);
+    printf("%s: %d: syntax error", ifn.c_str(), linum);
+    exit(1);
 }
 
 
@@ -389,7 +385,7 @@ static rcstring token_value_string;
 static int
 lex_getc()
 {
-    int c = explain_getc_or_die(ifp);
+    int c = getc(ifp);
     if (c == '\n')
         ++linum;
     return c;
@@ -641,7 +637,7 @@ arch_adaptable::read_text(rcstring const &infile)
     if (stdio_stream(ifn))
         ifn = "stdin";
     else
-        ifp = explain_fopen_or_die(ifn.c_str(), "r");
+        ifp = fopen(ifn.c_str(), "r");
     linum = 1;
 
     for (;;)
@@ -703,7 +699,7 @@ arch_adaptable::read_text(rcstring const &infile)
             syntax_error();
     }
     if (ifp != stdin)
-        explain_fclose_or_die(ifp);
+        fclose(ifp);
 }
 
 

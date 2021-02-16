@@ -20,9 +20,6 @@
 #include <string.h>
 #include <png.h>
 #include <zlib.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/output.h>
 
 #include <lib/bitmap/png.h>
 #include <lib/bitrev.h>
@@ -73,25 +70,27 @@ string_from_color_type(int x)
 void
 bitmap_png::read(unsigned &width, unsigned &height, unsigned char *&data)
 {
-    FILE *ifp = explain_fopen_or_die(filename.c_str(), "rb");
+    FILE *ifp = fopen(filename.c_str(), "rb");
     png_structp png_ptr =
         png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
     if (!png_ptr)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: png_create_read_struct failed",
             filename.c_str()
         );
+        exit(1);
     }
     png_info *info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: png_create_info_struct failed",
             filename.c_str()
         );
+        exit(1);
     }
     png_init_io(png_ptr, ifp);
     png_read_png(png_ptr, info_ptr, 0, NULL);
@@ -111,13 +110,14 @@ bitmap_png::read(unsigned &width, unsigned &height, unsigned char *&data)
         )
     )
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: the image must be a 1-bit monochrome image, not %d-bit %s",
             filename.c_str(),
             bit_depth,
             string_from_color_type(color_type).c_str()
         );
+        exit(1);
     }
 
     //
@@ -136,20 +136,22 @@ bitmap_png::read(unsigned &width, unsigned &height, unsigned char *&data)
         int n = png_get_PLTE(png_ptr, info_ptr, palette, &num_palette);
         if (n == 0)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: png_get_PLTE failed",
                 filename.c_str()
             );
+            exit(1);
         }
         if (num_palette != 2)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s: weird palette size (expected 2, observed %d)",
                 filename.c_str(),
                 num_palette
             );
+            exit(1);
         }
 
         // FIXME: get fussier about the colors in the palette?
@@ -197,32 +199,34 @@ bitmap_png::read(unsigned &width, unsigned &height, unsigned char *&data)
         }
     }
     png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-    explain_fclose_or_die(ifp);
+    fclose(ifp);
 }
 
 
 void
 bitmap_png::write(unsigned width, unsigned height, const unsigned char *data)
 {
-    FILE *ofp = explain_fopen_or_die(filename.c_str(), "wb");
+    FILE *ofp = fopen(filename.c_str(), "wb");
     png_struct *png_ptr =
         png_create_write_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
     if (!png_ptr)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: png_create_write_struct failed",
             filename.c_str()
         );
+        exit(1);
     }
     png_info *info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: png_create_info_struct failed",
             filename.c_str()
         );
+        exit(1);
     }
     png_init_io(png_ptr, ofp);
     png_set_compression_level(png_ptr, Z_BEST_COMPRESSION);
@@ -256,7 +260,7 @@ bitmap_png::write(unsigned width, unsigned height, const unsigned char *data)
     }
     delete [] rdat;
     png_write_end(png_ptr, NULL);
-    explain_fclose_or_die(ofp);
+    fclose(ofp);
 }
 
 

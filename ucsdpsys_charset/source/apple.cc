@@ -18,12 +18,6 @@
 
 #include <lib/ac/assert.h>
 #include <lib/ac/sys/stat.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fstat.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
-#include <libexplain/stat.h>
 
 #include <lib/get_filename.h>
 
@@ -32,7 +26,7 @@
 
 source_apple::~source_apple()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -41,7 +35,7 @@ static off_t
 filesize(FILE *fp)
 {
     struct stat st;
-    explain_fstat_or_die(fileno(fp), &st);
+    fstat(fileno(fp), &st);
     return st.st_size;
 }
 
@@ -53,13 +47,13 @@ source_apple::source_apple(const rcstring &a_filename) :
     if (looks_like_a_stdin_synonym(filename))
         filename = filename_from_stream(fp);
     else
-        fp = explain_fopen_or_die(filename.c_str(), "rb");
+        fp = fopen(filename.c_str(), "rb");
     assert(fp);
 
     off_t fs = filesize(fp);
     if (fs != 1024)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: the unlikely file size (%ld = 0x%04lX) does not appear to be "
                 "consistent with an Apple Pascal system.charset file "
@@ -68,6 +62,7 @@ source_apple::source_apple(const rcstring &a_filename) :
             (long)fs,
             (long)fs
         );
+        exit(1);
     }
 }
 
@@ -83,7 +78,7 @@ static off_t
 filesize(const rcstring &filename)
 {
     struct stat st;
-    explain_stat_or_die(filename.c_str(), &st);
+    stat(filename.c_str(), &st);
     return st.st_size;
 }
 
@@ -113,12 +108,13 @@ source_apple::read_one_glyph(void)
 
     if (pos & 7)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: 0x%04X: format error, incorrect alignment",
             filename.c_str(),
             addr
         );
+        exit(1);
     }
 
     // the rows are bottom-to-top
@@ -132,7 +128,7 @@ source_apple::read_one_glyph(void)
     for (unsigned y = 0; y < sizeof(data); ++y)
     {
         unsigned s1y = sizeof(data) - 1 - y;
-        data[s1y] = explain_getc_or_die(fp);
+        data[s1y] = getc(fp);
         if (0x80 & data[s1y])
             high_bit_on = true;
     }

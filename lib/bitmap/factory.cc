@@ -19,10 +19,6 @@
 #include <lib/ac/stdio.h>
 #include <lib/ac/string.h>
 #include <fcntl.h>
-#include <libexplain/close.h>
-#include <libexplain/open.h>
-#include <libexplain/output.h>
-#include <libexplain/read.h>
 
 #include <lib/bitmap/png.h>
 #include <lib/bitmap/raw.h>
@@ -31,10 +27,10 @@
 static bool
 looks_like_text(const rcstring &filename)
 {
-    int fd = explain_open_or_die(filename.c_str(), O_RDONLY, 0666);
+    int fd = open(filename.c_str(), O_RDONLY, 0666);
     char data[512];
-    ssize_t n = explain_read_or_die(fd, data, sizeof(data));
-    explain_close_or_die(fd);
+    ssize_t n = read(fd, data, sizeof(data));
+    close(fd);
     if (n == 0)
         return true;
 
@@ -56,12 +52,13 @@ bitmap::factory(const rcstring &filename)
 
     if (looks_like_text(filename))
     {
-        explain_output_error_and_die
+        printf
         (
             "the %s file looks like it is text, but need a binary image; "
                 "aborting",
             filename.quote_c().c_str()
         );
+        exit(1);
     }
 
     // this is the default.  it sucks.

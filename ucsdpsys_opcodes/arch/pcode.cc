@@ -17,13 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fread.h>
-#include <libexplain/fwrite.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
 
 #include <lib/rcstring/accumulator.h>
 #include <lib/sizeof.h>
@@ -78,20 +71,22 @@ parse_error(const char *fmt, ...)
     rcstring buffer = rcstring::vprintf(fmt, ap);
     va_end(ap);
 
-    explain_output_error_and_die
+    printf
     (
         "%s: %d: %s",
         ifn.c_str(),
         linum,
         buffer.c_str()
     );
+    exit(1);
 }
 
 
 static void
 syntax_error(void)
 {
-    explain_output_error_and_die("%s: %d: syntax error", ifn.c_str(), linum);
+    printf("%s: %d: syntax error", ifn.c_str(), linum);
+    exit(1);
 }
 
 
@@ -119,7 +114,7 @@ static rcstring token_value_string;
 static int
 lex_getc(void)
 {
-    int c = explain_getc_or_die(ifp);
+    int c = getc(ifp);
     if (c == '\n')
         ++linum;
     return c;
@@ -367,7 +362,7 @@ arch_pcode::read_text(const rcstring &infile)
     if (stdio_stream(ifn))
         ifn = "stdin";
     else
-        ifp = explain_fopen_or_die(ifn.c_str(), "r");
+        ifp = fopen(ifn.c_str(), "r");
     linum = 1;
     int used[256];
     for (int j = 0; j < 256; ++j)
@@ -420,7 +415,7 @@ arch_pcode::read_text(const rcstring &infile)
             syntax_error();
     }
     if (ifp != stdin)
-        explain_fclose_or_die(ifp);
+        fclose(ifp);
 }
 
 
@@ -434,22 +429,22 @@ arch_pcode::write_binary(const rcstring &outfile)
         ?
             stdout
         :
-            explain_fopen_or_die(outfile.c_str(), "wb")
+            fopen(outfile.c_str(), "wb")
         );
     for (unsigned j = 52; j < 256; ++j)
     {
         rcstring buf = opname[j] + "        ";
-        explain_fwrite_or_die(buf.c_str(), 1, 8, ofp);
+        fwrite(buf.c_str(), 1, 8, ofp);
     }
     for (unsigned j = 0; j < 256; ++j)
     {
         unsigned char data[2];
         put_word(data, optype[j]);
-        explain_fwrite_or_die(data, 1, sizeof(data), ofp);
+        fwrite(data, 1, sizeof(data), ofp);
     }
-    explain_fflush_or_die(ofp);
+    fflush(ofp);
     if (ofp != stdout)
-        explain_fclose_or_die(ofp);
+        fclose(ofp);
 }
 
 
@@ -463,7 +458,7 @@ arch_pcode::write_text(const rcstring &ofn)
         ?
             stdout
         :
-            explain_fopen_or_die(ofn.c_str(), "w")
+            fopen(ofn.c_str(), "w")
         );
     for (size_t k = 0; k < 256; ++k)
     {
@@ -486,9 +481,9 @@ arch_pcode::write_text(const rcstring &ofn)
         }
         fprintf(ofp, ";\n");
     }
-    explain_fflush_or_die(ofp);
+    fflush(ofp);
     if (ofp != stdout)
-        explain_fclose_or_die(ofp);
+        fclose(ofp);
 }
 
 
@@ -507,12 +502,14 @@ arch_pcode::read_binary(const rcstring &filename)
 {
     FILE *fp = stdin;
     if (!stdio_stream(filename))
-        fp = explain_fopen_or_die(filename.c_str(), "r");
+        fp = fopen(filename.c_str(), "r");
     for (unsigned j = 52; j < 256; ++j)
     {
         char data[8];
-        if (explain_fread_or_die(data, 1, sizeof(data), fp) != sizeof(data))
-            explain_output_error_and_die("%s: short file", filename.c_str());
+        if (fread(data, 1, sizeof(data), fp) != sizeof(data)) {
+            printf("%s: short file", filename.c_str());
+            exit(1);
+        }
         const char *ep = data + sizeof(data);
         while (ep > data && (ep[-1] == ' ' || ep[-1] == '\0'))
             --ep;
@@ -521,12 +518,14 @@ arch_pcode::read_binary(const rcstring &filename)
     for (unsigned j = 0; j < 256; ++j)
     {
         unsigned char data[2];
-        if (explain_fread_or_die(data, 1, sizeof(data), fp) != sizeof(data))
-            explain_output_error_and_die("%s: short file", filename.c_str());
+        if (fread(data, 1, sizeof(data), fp) != sizeof(data)) {
+            printf("%s: short file", filename.c_str());
+            exit(1);
+        }
         optype[j] = get_word(data);
     }
     if (fp != stdin)
-        explain_fclose_or_die(fp);
+        fclose(fp);
 }
 
 

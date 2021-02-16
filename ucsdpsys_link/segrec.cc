@@ -18,7 +18,6 @@
 
 #include <lib/ac/stdio.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/debug.h>
 #include <lib/seginfo.h>
@@ -115,7 +114,7 @@ segrec::symtab_insert(const link_info_entry::pointer &ep)
     if (it != symtab.end())
     {
         assert(ep->origin);
-        explain_output_error
+        printf
         (
             "codefile %s, segment %s: why is %s defined twice?",
             ep->origin->get_src_filename().quote_c().c_str(),
@@ -342,12 +341,13 @@ segrec::read_source_segment(const workrec_list_t &procs)
             ++last;
             if (last > 255)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "codefile %s, segment %s: procedure number overflow",
                     wp->defsym->origin->get_src_filename().quote_c().c_str(),
                     wp->defsym->origin->get_src_segname().quote_c().c_str()
                 );
+                exit(1);
                 last = 1;
             }
             wp->newproc = last;
@@ -448,13 +448,14 @@ segrec::fix_up_references(workrec_list_t &works, bool fix_all_refs,
             }
             else if (val < 0 || val >= 65536)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "codefile %s, segment %s: address overflow (%d)",
                     work->defsym->origin->get_src_filename().quote_c().c_str(),
                     work->defsym->origin->get_src_segname().quote_c().c_str(),
                     val
                 );
+                exit(1);
             }
             break;
 

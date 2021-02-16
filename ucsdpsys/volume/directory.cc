@@ -16,6 +16,7 @@
 // with this program. If not, see <http://www.gnu.org/licenses/>
 //
 
+#include <dirent.h>
 #include <lib/ac/assert.h>
 #include <lib/ac/ctype.h>
 #include <lib/ac/errno.h>
@@ -24,17 +25,6 @@
 #include <fcntl.h>
 #include <lib/ac/map>
 #include <lib/ac/sys/stat.h>
-#include <libexplain/close.h>
-#include <libexplain/closedir.h>
-#include <libexplain/open.h>
-#include <libexplain/opendir.h>
-#include <libexplain/output.h>
-#include <libexplain/read.h>
-#include <libexplain/readdir.h>
-#include <libexplain/program_name.h>
-#include <libexplain/stat.h>
-#include <libexplain/system.h>
-#include <libexplain/unlink.h>
 #include <unistd.h>
 
 #include <lib/read_whole_directory.h>
@@ -53,11 +43,12 @@ volume_directory::~volume_directory()
         errno != ENOENT
     )
     {
-        explain_output_error_and_die
+        printf
         (
             "%s",
-            explain_unlink(temporary_file_name.c_str())
+            unlink(temporary_file_name.c_str())
         );
+        exit(1);
     }
 }
 
@@ -119,7 +110,7 @@ temp_volume_name(void)
             rcstring::printf
             (
                 "/tmp/%s-%d-%d.vol",
-                explain_program_name_get(),
+                "ucsdpsys",
                 getpid(),
                 j
             );
@@ -153,10 +144,10 @@ volume_directory::get_temporary_file_name(void)
 static int
 looks_like_text(const rcstring &path)
 {
-    int fd = explain_open_or_die(path.c_str(), O_RDONLY, 0666);
+    int fd = open(path.c_str(), O_RDONLY, 0666);
     unsigned char data[1024];
-    int n = explain_read_or_die(fd, data, sizeof(data));
-    explain_close_or_die(fd);
+    int n = read(fd, data, sizeof(data));
+    close(fd);
     if (n <= 0)
         return false;
     for (int j = 0; j < n; ++j)
@@ -173,16 +164,16 @@ static int
 estimate_directory_size(const rcstring &path)
 {
     int nblocks = 0;
-    DIR *dp = explain_opendir_or_die(path.c_str());
+    DIR *dp = opendir(path.c_str());
     for (;;)
     {
-        struct dirent *dep = explain_readdir_or_die(dp);
+        struct dirent *dep = readdir(dp);
         if (!dep)
             break;
         rcstring name = dep->d_name;
         rcstring path2 = path + "/" + name;
         struct stat st;
-        explain_stat_or_die(path2.c_str(), &st);
+        stat(path2.c_str(), &st);
         if (S_ISREG(st.st_mode))
         {
             if (looks_like_text(path2))
@@ -191,7 +182,7 @@ estimate_directory_size(const rcstring &path)
                 nblocks += (st.st_size + 511) >> 9;
         }
     }
-    explain_closedir_or_die(dp);
+    closedir(dp);
     return nblocks;
 }
 
@@ -216,7 +207,7 @@ static bool
 is_a_regular_file(const rcstring &path)
 {
     struct stat st;
-    explain_stat_or_die(path.c_str(), &st);
+    stat(path.c_str(), &st);
     return S_ISREG(st.st_mode);
 }
 
@@ -244,8 +235,8 @@ volume_directory::slurp(void)
         + " --label="
         + volume_name.quote_shell() + " "
         + get_temporary_file_name().quote_shell();
-    explain_output_message(command.c_str());
-    explain_system_success_or_die(command.c_str());
+    printf(command.c_str());
+    system(command.c_str());
 
     //
     // Read the directories, using the files present therein, except
@@ -282,8 +273,8 @@ volume_directory::slurp(void)
     //
     command = "ucsdpsys_disk --file " + get_temporary_file_name().quote_shell()
         + " --put " + contents.quote_shell().unsplit();
-    explain_output_message(command.c_str());
-    explain_system_success_or_die(command.c_str());
+    printf(command.c_str());
+    system(command.c_str());
 }
 
 
@@ -299,14 +290,14 @@ volume_directory::unslurp(void)
         rcstring command = "ucsdpsys_disk -f "
             + get_temporary_file_name().quote_shell() + " -g "
             + directories[0].quote_shell();
-        explain_output_message(command.c_str());
-        explain_system_success_or_die(command.c_str());
+        printf(command.c_str());
+        system(command.c_str());
     }
 
     //
     // Get rid of the temporary file.
     //
-    explain_unlink_or_die(get_temporary_file_name().c_str());
+    unlink(get_temporary_file_name().c_str());
 }
 
 
@@ -363,7 +354,7 @@ volume_directory::contains_system_files(void)
     rcstring command =
         "ucsdpsys_disk --file " + get_temporary_file_name().quote_shell() +
         " --system-volume";
-    int n = explain_system_or_die(command.c_str());
+    int n = system(command.c_str());
     // exit status: 0 found a match (no output),
     //              1 no match (no output),
     //              1 all other errors (with output).

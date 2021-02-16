@@ -19,7 +19,6 @@
 #include <lib/ac/assert.h>
 #include <lib/ac/math.h>
 #include <lib/ac/time.h>
-#include <libexplain/gettimeofday.h>
 
 #include <lib/time_value.h>
 
@@ -148,7 +147,7 @@ time_value::operator double()
 void
 time_value::get_time_of_day()
 {
-    explain_gettimeofday_or_die(this, 0);
+    gettimeofday(this, 0);
     assert(valid());
 }
 

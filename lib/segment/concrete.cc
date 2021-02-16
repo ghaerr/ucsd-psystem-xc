@@ -18,7 +18,6 @@
 
 #include <lib/ac/ctype.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/codefile.h>
 #include <lib/debug.h>
@@ -111,7 +110,7 @@ segment_concrete::read_link_information(void)
     case LINKED_INTRINS:
         if (linkinfo_nblocks != 0)
         {
-            explain_output_warning
+            printf
             (
                 "codefile %s, segment %s, %s: should have no link info, "
                     "but it has %d block%s",
@@ -131,7 +130,7 @@ segment_concrete::read_link_information(void)
     case UNLINKED_INTRINS:
         if (linkinfo_nblocks == 0)
         {
-            explain_output_warning
+            printf
             (
                 "codefile %s, segment %s, %s: should have link info, "
                     "but it does not",

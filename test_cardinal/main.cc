@@ -18,20 +18,16 @@
 
 #include <lib/ac/stdio.h>
 #include <lib/ac/stdlib.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/cardinal.h>
 #include <lib/version.h>
 
-
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
-    fprintf(stderr, "Usage: %s [ -aomtz ] <number>...\n", prog);
-    fprintf(stderr, "       %s -V\n", prog);
+    fprintf(stderr, "Usage: %s [ -aomtz ] <number>...\n", "test_cardinal");
+    fprintf(stderr, "       %s -V\n", "test_cardinal");
     exit(1);
 }
 
@@ -39,8 +35,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     bool call_ordinal = false;
     int style = 0;
     for (;;)

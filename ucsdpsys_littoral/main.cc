@@ -20,10 +20,6 @@
 #include <lib/ac/stdlib.h>
 #include <lib/ac/string.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/fflush.h>
-#include <libexplain/freopen.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/debug.h>
@@ -37,7 +33,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_littoral";
     fprintf(stderr, "Usage: %s [ -y ] <input-file-name>\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -47,8 +43,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     rcstring output_file_name;
     bool grammar_debug = false;
     rcstring_list warnings;
@@ -185,7 +179,7 @@ main(int argc, char **argv)
     // Write out the code file.
     //
     slurp.traversal();
-    explain_fflush_or_die(stdout);
+    fflush(stdout);
     return 0;
 }
 

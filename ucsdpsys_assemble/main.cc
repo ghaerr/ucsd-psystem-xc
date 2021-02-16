@@ -18,8 +18,6 @@
 
 #include <lib/ac/stdio.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/debug.h>
@@ -37,7 +35,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_assemble";
     fprintf(stderr, "Usage: %s [ <option>... ] <filename>\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -47,8 +45,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     set_segfault_handler();
     rcstring code_file;
     const char *architecture = 0;

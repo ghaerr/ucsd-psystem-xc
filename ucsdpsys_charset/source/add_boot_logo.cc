@@ -18,7 +18,6 @@
 
 #include <lib/ac/assert.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/bitmap/png.h>
 
@@ -92,7 +91,7 @@ source_add_boot_logo::get_boot_logo(unsigned char *data)
 
     if (width != 64 || height != 64)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: the image --size=%dx%d is incorrect for a UCSD Pascal system "
                 "boot logo (should be --size=64x64)",
@@ -100,6 +99,7 @@ source_add_boot_logo::get_boot_logo(unsigned char *data)
             width,
             height
         );
+        exit(1);
     }
 
     // copy the data across

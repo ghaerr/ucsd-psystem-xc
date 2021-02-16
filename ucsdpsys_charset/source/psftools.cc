@@ -18,11 +18,6 @@
 
 #include <lib/ac/stdlib.h>
 #include <lib/ac/string.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fgets.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
 
 #include <lib/get_filename.h>
 #include <lib/rcstring/accumulator.h>
@@ -33,7 +28,7 @@
 
 source_psftools::~source_psftools()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -51,7 +46,7 @@ source_psftools::source_psftools(const rcstring &a_filename) :
     if (looks_like_a_stdin_synonym(filename))
         filename = filename_from_stream(stdin);
     else
-        fp = explain_fopen_or_die(filename.c_str(), "r");
+        fp = fopen(filename.c_str(), "r");
 }
 
 
@@ -68,11 +63,11 @@ source_psftools::candidate(const rcstring &fn)
     if (looks_like_a_stdin_synonym(fn))
         return true;
 
-    FILE *fp = explain_fopen_or_die(fn.c_str(), "r");
+    FILE *fp = fopen(fn.c_str(), "r");
     char buffer[20];
     memset(buffer, 0, sizeof(buffer));
-    explain_fgets_or_die(buffer, sizeof(buffer), fp);
-    explain_fclose_or_die(fp);
+    fgets(buffer, sizeof(buffer), fp);
+    fclose(fp);
     return (0 == memcmp(buffer, "%PSF", 4));
 }
 
@@ -82,11 +77,11 @@ source_psftools::lex_getc(void)
 {
     for (;;)
     {
-        int c = explain_getc_or_die(fp);
+        int c = getc(fp);
         switch (c)
         {
         case '\\':
-            c = explain_getc_or_die(fp);
+            c = getc(fp);
             if (c == '\n')
             {
                 ++line_number;
@@ -348,13 +343,14 @@ source_psftools::fatal_error(const char *fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
 
-    explain_output_error_and_die
+    printf
     (
         "%s: %d: %s",
         filename.c_str(),
         line_number,
         buffer
     );
+    exit(1);
 }
 
 
@@ -615,19 +611,21 @@ source_psftools::read_one_glyph(void)
             normal:
             if (bitmap.empty())
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: missing bitmap",
                     location.c_str()
                 );
+                exit(1);
             }
             if (unicode < 0)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "%s: missing unicode",
                     location.c_str()
                 );
+                exit(1);
             }
             if (unicode < 0x0100)
             {

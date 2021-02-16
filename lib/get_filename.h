@@ -20,8 +20,6 @@
 #define LIB_GET_FILENAME_H
 
 #include <lib/ac/stdio.h>
-#include <libexplain/filename.h>
-#include <libexplain/getcwd.h>
 
 #include <lib/rcstring.h>
 

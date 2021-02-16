@@ -21,13 +21,6 @@
 #include <lib/ac/stdlib.h>
 #include <lib/ac/string.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fread.h>
-#include <libexplain/fwrite.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/byte_sex.h>
@@ -124,13 +117,14 @@ barf_on_errors(const char *filename)
 {
     if (number_of_errors > 0)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: found %d error%s\n",
             filename,
             number_of_errors,
             (number_of_errors == 1 ? "" : "s")
         );
+        exit(1);
     }
 }
 
@@ -147,18 +141,20 @@ set_byte_sex_by_arch(const rcstring &name)
         mt = mtype_from_name_fuzzy(name);
         if (mt != mtype_undefined)
         {
-            explain_output_error_and_die
+            printf
             (
                 "achitecture %s unknown, did you mean %s instead?",
                 name.quote_c().c_str(),
                 mtype_name(mt).quote_c().c_str()
             );
+            exit(1);
         }
-        explain_output_error_and_die
+        printf
         (
             "achitecture %s unknown",
             name.quote_c().c_str()
         );
+        exit(1);
     }
     byte_sex = byte_sex_from_mtype(mt);
 }
@@ -170,7 +166,8 @@ set_byte_sex_by_host(const rcstring &name)
     mtype_t mt = mtype_from_host(name);
     if (mt == mtype_undefined)
     {
-        explain_output_error_and_die("host %s unknown", name.quote_c().c_str());
+        printf("host %s unknown", name.quote_c().c_str());
+        exit(1);
     }
     byte_sex = byte_sex_from_mtype(mt);
 }
@@ -224,8 +221,8 @@ split(const rcstring &line, rcstring &name, rcstring &value)
 static void
 slurp_binary(const char *filename)
 {
-    FILE *fp = explain_fopen_or_die(filename, "r");
-    size_t n = explain_fread_or_die(data, 1, sizeof(data), fp);
+    FILE *fp = fopen(filename, "r");
+    size_t n = fread(data, 1, sizeof(data), fp);
     int min_size = 96 * 2;
     if (n < 96 * 2)
     {
@@ -241,7 +238,7 @@ slurp_binary(const char *filename)
     }
     if (n < 512)
         memset(data + n, 0, 512 - n);
-    explain_fclose_or_die(fp);
+    fclose(fp);
 
     barf_on_errors(filename);
 }
@@ -250,14 +247,14 @@ slurp_binary(const char *filename)
 static int
 getc_without_comments(FILE *fp)
 {
-    int c = explain_getc_or_die(fp);
+    int c = getc(fp);
 
     // Ugly Comments.
     if (c == '{')
     {
         for (;;)
         {
-            c = explain_getc_or_die(fp);
+            c = getc(fp);
             if (c == '\n')
                 ++line_number;
             if (c == EOF)
@@ -270,19 +267,19 @@ getc_without_comments(FILE *fp)
     // Slightly Less Ugly Comments
     if (c == '(')
     {
-        c = explain_getc_or_die(fp);
+        c = getc(fp);
         if (c == '*')
         {
             for (;;)
             {
-                c = explain_getc_or_die(fp);
+                c = getc(fp);
                 if (c == '\n')
                     ++line_number;
                 if (c == EOF)
                     return EOF;
                 if (c == '*')
                 {
-                    c = explain_getc_or_die(fp);
+                    c = getc(fp);
                     if (c == ')')
                         return ' ';
                     if (c != EOF)
@@ -495,7 +492,7 @@ slurp_text(const char *filename)
 
     memset(data, 0, sizeof(data));
 
-    FILE *fp = explain_fopen_or_die(filename, "r");
+    FILE *fp = fopen(filename, "r");
     line_number = 0;
     for (;;)
     {
@@ -635,9 +632,9 @@ slurp_text(const char *filename)
 static void
 spew_binary(const char *filename)
 {
-    FILE *fp = explain_fopen_or_die(filename, "wb");
-    explain_fwrite_or_die(data, 1, sizeof(data), fp);
-    explain_fclose_or_die(fp);
+    FILE *fp = fopen(filename, "wb");
+    fwrite(data, 1, sizeof(data), fp);
+    fclose(fp);
 }
 
 
@@ -653,7 +650,7 @@ spew_text(const char *filename)
     }
     width += 3;
 
-    FILE *fp = explain_fopen_or_die(filename,"w");
+    FILE *fp = fopen(filename,"w");
     for (const table_t *tp = table; tp < ENDOF(table); ++tp)
     {
         rcstring s = rcstring(tp->name) + " :=";
@@ -685,7 +682,7 @@ spew_text(const char *filename)
         }
         putc('\n', fp);
     }
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 
@@ -699,7 +696,7 @@ byte_sex_override(void)
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_setup";
     fprintf(stderr, "Usage: %s [ <option>... ] <infile> <outfile>\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -709,8 +706,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     bool decode = false;
     bool encode = false;
     bool byte_sex_force = false;
@@ -765,10 +760,14 @@ main(int argc, char **argv)
     }
     if (optind + 2 != argc)
         usage();
-    if (!encode && !decode)
-        explain_output_error_and_die("no function specified");
-    if (encode && decode)
-        explain_output_error_and_die("too many functions specified");
+    if (!encode && !decode) {
+        printf("no function specified");
+        exit(1);
+    }
+    if (encode && decode) {
+        printf("too many functions specified");
+        exit(1);
+    }
     if (decode)
     {
         slurp_binary(argv[optind++]);

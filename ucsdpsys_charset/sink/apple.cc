@@ -18,20 +18,13 @@
 
 #include <lib/ac/string.h>
 #include <lib/ac/sys/stat.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fputc.h>
-#include <libexplain/fseek.h>
-#include <libexplain/fstat.h>
-#include <libexplain/putc.h>
 
 #include <ucsdpsys_charset/sink/apple.h>
 
 
 sink_apple::~sink_apple()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -59,7 +52,7 @@ sink_apple::create(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "wb")
+            fopen(filename.c_str(), "wb")
         );
     return pointer(new sink_apple(fp));
 }
@@ -70,7 +63,7 @@ filesize(FILE *fp)
 {
     int fd = fileno(fp);
     struct stat st;
-    explain_fstat_or_die(fd, &st);
+    fstat(fd, &st);
     ssize_t big = ((size_t)1 << 15);
     return (st.st_size < big ? st.st_size : big);
 }
@@ -84,8 +77,8 @@ sink_apple::write_whole_font_begin(void)
     {
         // establish the file length.
         // all the skipped bytes will be 0x00.
-        explain_fseek_or_die(fp, 1023, SEEK_SET);
-        explain_fputc_or_die(0x00, fp);
+        fseek(fp, 1023, SEEK_SET);
+        fputc(0x00, fp);
         rewind(fp);
     }
 }
@@ -107,11 +100,11 @@ sink_apple::write_one_glyph(const glyph::pointer &gp0)
     // data stored on disk bottom-to-top
     gp = gp->vflip();
 
-    explain_fseek_or_die(fp, c * apple_height, SEEK_SET);
+    fseek(fp, c * apple_height, SEEK_SET);
     for (unsigned y = 0; y < apple_height; ++y)
     {
         const unsigned char *row = gp->get_row(y);
-        explain_putc_or_die(*row, fp);
+        putc(*row, fp);
     }
 }
 
@@ -119,7 +112,7 @@ sink_apple::write_one_glyph(const glyph::pointer &gp0)
 void
 sink_apple::write_whole_font_end(void)
 {
-    explain_fflush_or_die(fp);
+    fflush(fp);
 }
 
 
