@@ -18,7 +18,6 @@
 
 #include <lib/ac/stdarg.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 
 #include <lib/cardinal.h>
 #include <lib/pascal_id.h>
@@ -807,12 +806,13 @@ target_build::generate(const rcstring_list &filenames)
             {
                 if (!fn.starts_with("arch/"))
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "assemblers must be located at "
                             "arch/$(arch)/assembler/main.text, not %s",
                         fn.c_str()
                     );
+                    exit(1);
                 }
                 have_assembler = true;
             }
@@ -841,12 +841,13 @@ target_build::generate(const rcstring_list &filenames)
             {
                 if (!fn.starts_with("arch/") && !fn.starts_with("host/"))
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "interpreters must be located at "
                             "arch/$(arch)/interpreter/main.asm.text, not %s",
                         fn.c_str()
                     );
+                    exit(1);
                 }
                 have_interpreter = true;
             }

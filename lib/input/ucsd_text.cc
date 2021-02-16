@@ -18,11 +18,7 @@
 
 #include <lib/ac/ctype.h>
 #include <fcntl.h>
-#include <libexplain/close.h>
-#include <libexplain/fstat.h>
-#include <libexplain/open.h>
-#include <libexplain/output.h>
-#include <libexplain/read.h>
+#include <sys/stat.h>
 
 #include <lib/input/ucsd_text.h>
 
@@ -35,7 +31,7 @@ input_ucsd_text::~input_ucsd_text()
 {
     if (fd >= 0)
     {
-        explain_close_or_die(fd);
+        close(fd);
         fd = -1;
     }
 }
@@ -87,14 +83,14 @@ input_ucsd_text::input_ucsd_text(const rcstring &a_path) :
     block_posn(0),
     dle_seen(0)
 {
-    fd = explain_open_or_die(path.c_str(), O_RDONLY | O_BINARY, 0);
+    fd = open(path.c_str(), O_RDONLY | O_BINARY, 0);
 
     //
     // The first 1kB block is supposed to be a binary blob for the
     // editor's personal use.  Sometimes this header has been ripped
     // off, and we must cope with that.
     //
-    block_size = explain_read_or_die(fd, block, sizeof(block));
+    block_size = ::read(fd, block, sizeof(block));
     if (block_size == 0)
         return;
     if (block_size != sizeof(block))
@@ -137,7 +133,7 @@ input_ucsd_text::candidate(const rcstring &a_path)
     if (fd < 0)
         return pointer();
     unsigned char block[1024];
-    ssize_t n = explain_read_or_die(fd, block, sizeof(block));
+    ssize_t n = ::read(fd, block, sizeof(block));
     if (n != sizeof(block))
     {
         close(fd);
@@ -153,7 +149,7 @@ input_ucsd_text::candidate(const rcstring &a_path)
     }
 
     // Check the second block.
-    n = explain_read_or_die(fd, block, sizeof(block));
+    n = ::read(fd, block, sizeof(block));
     close(fd);
     if (n == 0)
     {
@@ -192,7 +188,7 @@ input_ucsd_text::read_inner(void *vdata, size_t len)
         if (block_posn >= block_size)
         {
             block_posn = 0;
-            block_size = explain_read_or_die(fd, block, sizeof(block));
+            block_size = ::read(fd, block, sizeof(block));
             if (block_size == 0)
                 goto done;
             if (block_size != sizeof(block))
@@ -258,7 +254,7 @@ input_ucsd_text::length()
 {
     assert(fd >= 0);
     struct stat st;
-    explain_fstat_or_die(fd, &st);
+    ::fstat(fd, &st);
     return st.st_size;
 }
 
@@ -274,18 +270,19 @@ void
 input_ucsd_text::fstat(struct stat &st)
 {
     assert(fd >= 0);
-    explain_fstat_or_die(fd, &st);
+    ::fstat(fd, &st);
 }
 
 
 void
 input_ucsd_text::format_error(void)
 {
-    explain_output_error_and_die
+    printf
     (
         "%s: does not appear to be a valid UCSD p-System text file",
         path.c_str()
     );
+    exit(1);
 }
 
 

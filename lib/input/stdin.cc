@@ -19,8 +19,6 @@
 #include <lib/ac/errno.h>
 #include <lib/ac/stdio.h>
 #include <lib/ac/sys/stat.h>
-#include <libexplain/fstat.h>
-#include <libexplain/read.h>
 #include <unistd.h>
 
 #include <lib/input/stdin.h>
@@ -62,7 +60,7 @@ input_stdin::read_inner(void *data, size_t len)
     if (unbuffered)
         len = 1;
     int fd = fileno(stdin);
-    long result = explain_read_or_die(fd, data, len);
+    long result = ::read(fd, data, len);
     pos += result;
     return result;
 }
@@ -100,7 +98,7 @@ input_stdin::fpathconf_name_max()
 void
 input_stdin::fstat(struct stat &st)
 {
-    explain_fstat_or_die(fileno(stdin), &st);
+    ::fstat(fileno(stdin), &st);
 }
 
 

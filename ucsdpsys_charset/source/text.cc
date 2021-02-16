@@ -17,10 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
 
 #include <lib/get_filename.h>
 #include <lib/rcstring/accumulator.h>
@@ -31,7 +27,7 @@
 
 source_text::~source_text()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -46,7 +42,7 @@ source_text::source_text(const rcstring &a_filename) :
     if (looks_like_a_stdin_synonym(filename))
         filename = filename_from_stream(stdin);
     else
-        fp = explain_fopen_or_die(filename.c_str(), "r");
+        fp = fopen(filename.c_str(), "r");
     assert(fp);
 }
 
@@ -75,25 +71,27 @@ source_text::parse_error(const char *fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
 
-    explain_output_error_and_die
+    printf
     (
         "%s: %d: %s",
         filename.c_str(),
         line_number,
         buffer
     );
+    exit(1);
 }
 
 
 void
 source_text::syntax_error(void)
 {
-    explain_output_error_and_die
+    printf
     (
         "%s: %d: syntax error",
         filename.c_str(),
         line_number
     );
+    exit(1);
 }
 
 
@@ -127,7 +125,7 @@ source_text::string_to_bits(const glyph::pointer &gp, unsigned y, const char *s)
 int
 source_text::lex_getc(void)
 {
-    int c = explain_getc_or_die(fp);
+    int c = getc(fp);
     if (c == '\n')
         ++line_number;
     return c;

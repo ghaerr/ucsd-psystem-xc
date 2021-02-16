@@ -18,9 +18,6 @@
 
 #include <lib/ac/assert.h>
 #include <lib/ac/string.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
 
 #include <lib/get_filename.h>
 
@@ -30,7 +27,7 @@
 
 sink_include::~sink_include()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -51,7 +48,7 @@ sink_include::create(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "w")
+            fopen(filename.c_str(), "w")
         );
     return pointer(new sink_include(fp));
 }
@@ -167,7 +164,7 @@ sink_include::write_whole_font_end(void)
     fprintf(fp, "    return create[c]();\n");
     fprintf(fp, "}\n");
 
-    explain_fflush_or_die(fp);
+    fflush(fp);
 }
 
 

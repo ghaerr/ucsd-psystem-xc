@@ -16,8 +16,9 @@
 // with this program. If not, see <http://www.gnu.org/licenses/>
 //
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <lib/ac/ctype.h>
-#include <libexplain/output.h>
 
 #include <lib/p_machine.h>
 #include <lib/sizeof.h>
@@ -34,14 +35,15 @@ p_machine_set(p_machine_t value)
     if (already_set)
     {
         if (set_explicitly)
-            explain_output_error_and_die("p-machine release already set");
+            printf("p-machine release already set");
         else
         {
-            explain_output_error_and_die
+            printf
             (
                 "attempted to set the p-machine release too late in the process"
             );
         }
+        exit(1);
     }
     already_set = true;
     p_machine = value;
@@ -112,11 +114,12 @@ p_machine_set(const rcstring &name)
             return;
         }
     }
-    explain_output_error_and_die
+    printf
     (
         "p-machine release %s unknown",
         name.quote_c().c_str()
     );
+    exit(1);
 }
 
 

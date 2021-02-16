@@ -19,13 +19,7 @@
 #include <lib/ac/errno.h>
 #include <lib/ac/string.h>
 #include <fcntl.h>
-#include <libexplain/close.h>
-#include <libexplain/fstat.h>
-#include <libexplain/lseek.h>
-#include <libexplain/open.h>
-#include <libexplain/output.h>
-#include <libexplain/read.h>
-#include <libexplain/write.h>
+#include <sys/stat.h>
 
 #include <lib/codefile/file.h>
 #include <lib/codefile/file/i_3.h>
@@ -98,27 +92,29 @@ codefile_file::codefile_file(
     }
     if (fd < 0)
     {
-        explain_output_error_and_die
+        printf
         (
-            "%s",
-            explain_open(filename.c_str(), O_RDONLY, 0)
+            "open failed %s",
+            filename.c_str()
         );
+        exit(1);
     }
 
     //
     // Work out the size of the file.
     //
     struct stat st;
-    explain_fstat_or_die(fd, &st);
+    fstat(fd, &st);
     if (st.st_size == 0 || (st.st_size % sizeof_block) != 0)
     {
         yuck:
-        explain_output_error_and_die
+        printf
         (
             "the %s file does not look like a UCSD p-System codefile, "
                 "it is an inappropriate size",
             get_filename().quote_c().c_str()
         );
+        exit(1);
     }
     size_in_blocks = st.st_size / sizeof_block;
     DEBUG(1, "size_in_blocks = %d", (int)size_in_blocks);
@@ -173,12 +169,12 @@ codefile_file::kinda_close(const char *buffer)
 p_machine_t
 codefile_file::guess_the_release(const rcstring &fn)
 {
-    int fildes = explain_open_or_die(fn.c_str(), O_RDONLY, 0);
+    int fildes = open(fn.c_str(), O_RDONLY, 0);
     char buffer[512];
-    ssize_t n = explain_read_or_die(fildes, buffer, sizeof(buffer));
+    ssize_t n = read(fildes, buffer, sizeof(buffer));
     if (n != sizeof(buffer))
         goto oops;
-    explain_close_or_die(fildes);
+    close(fildes);
 
     if (codefile_file_ii_1::candidate(buffer))
         return p_machine_ii_1;
@@ -192,20 +188,22 @@ codefile_file::guess_the_release(const rcstring &fn)
     oops:
     if (kinda_close(buffer))
     {
-        explain_output_error_and_die
+        printf
         (
             "the %s file looks similar to a valid UCSD Pascal codefile, "
                 "but the exact p-machine release could not be determined",
             fn.quote_c().c_str()
         );
+        exit(1);
     }
     else
     {
-        explain_output_error_and_die
+        printf
         (
             "the %s file does not look like a valid UCSD Pascal codefile",
             fn.quote_c().c_str()
         );
+        exit(1);
     }
     return p_machine_ii_1;
 }
@@ -265,7 +263,7 @@ codefile_file::codefile_file(
 #ifdef O_BINARY
     mode |= O_BINARY;
 #endif
-    fd = explain_open_or_die(filename.c_str(), mode, 0666);
+    fd = open(filename.c_str(), mode, 0666);
 }
 
 
@@ -330,19 +328,20 @@ codefile_file::read_block(unsigned block_number, void *data, unsigned nblocks)
     DEBUG(2, "nblocks = %u", nblocks);
     assert(fd >= 0);
     off_t offset = off_t(block_number) * sizeof_block;
-    explain_lseek_or_die(fd, offset, SEEK_SET);
+    lseek(fd, offset, SEEK_SET);
 
     size_t nbytes = size_t(nblocks) * sizeof_block;
-    ssize_t nr = explain_read_or_die(fd, data, nbytes);
+    ssize_t nr = read(fd, data, nbytes);
     if ((size_t)nr != nbytes)
     {
-        explain_output_error_and_die
+        printf
         (
             "read %s: return the wrong size (expected %ld, got %ld)",
             filename.quote_c().c_str(),
             long(nbytes),
             long(nr)
         );
+        exit(1);
     }
     DEBUG(1, "}");
 }
@@ -354,19 +353,20 @@ codefile_file::write_block(unsigned block_number, const void *data,
     DEBUG(1, "%s", __PRETTY_FUNCTION__);
     assert(fd >= 0);
     off_t offset = block_number * sizeof_block;
-    explain_lseek_or_die(fd, offset, SEEK_SET);
+    lseek(fd, offset, SEEK_SET);
 
     size_t nbytes = nblocks * sizeof_block;
-    ssize_t nr = explain_write_or_die(fd, data, nbytes);
+    ssize_t nr = write(fd, data, nbytes);
     if ((size_t)nr != nbytes)
     {
-        explain_output_error_and_die
+        printf
         (
             "write %s: return the wrong size (expected %ld, got %ld)",
             filename.quote_c().c_str(),
             long(nbytes),
             long(nr)
         );
+        exit(1);
     }
 }
 

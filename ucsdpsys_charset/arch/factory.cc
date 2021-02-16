@@ -18,7 +18,6 @@
 
 #include <lib/ac/assert.h>
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_charset/arch/normal.h>
 #include <ucsdpsys_charset/arch/terak.h>
@@ -34,18 +33,20 @@ arch::factory_by_arch(const rcstring &name)
         mtype = mtype_from_name_fuzzy(name);
         if (mtype == mtype_undefined)
         {
-            explain_output_error_and_die
+            printf
             (
                 "architecture %s unknown",
                 name.quote_c().c_str()
             );
+            exit(1);
         }
-        explain_output_error_and_die
+        printf
         (
             "architecture %s unknown, did you mean %s instead?",
             name.quote_c().c_str(),
             mtype_name(mtype).quote_c().c_str()
         );
+        exit(1);
     }
     return factory_by_mtype(mtype);
 }
@@ -57,7 +58,8 @@ arch::factory_by_host(const rcstring &name)
     mtype_t mtype = mtype_from_host(name);
     if (mtype == mtype_undefined)
     {
-        explain_output_error_and_die("host %s unknown", name.quote_c().c_str());
+        printf("host %s unknown", name.quote_c().c_str());
+        exit(1);
     }
     return factory_by_mtype(mtype);
 }

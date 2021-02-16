@@ -17,10 +17,6 @@
 //
 
 #include <lib/ac/errno.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/output.h>
 
 #include <lib/path_join.h>
 #include <lib/rcstring/accumulator.h>
@@ -127,11 +123,12 @@ language::view_fopen(const rcstring &filename, const char *mode)
         if (j >= view_path.size())
         {
             errno = ENOENT;
-            explain_output_error_and_die
+            printf
             (
                 "%s",
-                explain_fopen(filename.c_str(), mode)
+                fopen(filename.c_str(), mode)
             );
+            exit(1);
             //NOTREACHED
         }
 
@@ -142,11 +139,12 @@ language::view_fopen(const rcstring &filename, const char *mode)
             return fp;
         if (errno != ENOENT)
         {
-            explain_output_error_and_die
+            printf
             (
                 "%s",
-                explain_fopen(path.c_str(), mode)
+                fopen(path.c_str(), mode)
             );
+            exit(1);
         }
     }
 }
@@ -156,7 +154,7 @@ void
 language::print_results(const rcstring &ofn)
     const
 {
-    FILE *ofp = (ofn == "-" ? stdout : explain_fopen_or_die(ofn.c_str(), "w"));
+    FILE *ofp = (ofn == "-" ? stdout : fopen(ofn.c_str(), "w"));
     assert(ofp);
     if (!include_files.empty())
     {
@@ -181,9 +179,9 @@ language::print_results(const rcstring &ofn)
             fprintf(ofp, "\n");
         }
     }
-    explain_fflush_or_die(ofp);
+    fflush(ofp);
     if (ofp != stdout)
-        explain_fclose_or_die(ofp);
+        fclose(ofp);
 }
 
 

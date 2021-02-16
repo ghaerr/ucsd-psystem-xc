@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <ucsdpsys_osmakgen/target.h>
 
@@ -36,50 +35,55 @@ target::target(const rcstring &filename) :
 void
 target::set_default_host(const rcstring &)
 {
-    explain_output_error_and_die
+    printf
     (
         "this target does not support the --host option"
     );
+    exit(1);
 }
 
 
 void
 target::set_default_arch(const rcstring &)
 {
-    explain_output_error_and_die
+    printf
     (
         "this target does not support the --architecture option"
     );
+    exit(1);
 }
 
 
 void
 target::no_blurb(void)
 {
-    explain_output_error_and_die
+    printf
     (
         "this target does not support the --no-blurb option"
     );
+    exit(1);
 }
 
 
 void
 target::set_notice(const rcstring &)
 {
-    explain_output_error_and_die
+    printf
     (
         "this target does not support the --copyright option"
     );
+    exit(1);
 }
 
 
 void
 target::set_version(const rcstring &)
 {
-    explain_output_error_and_die
+    printf
     (
         "this target does not support the --revision option"
     );
+    exit(1);
 }
 
 

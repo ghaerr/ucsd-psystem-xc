@@ -18,8 +18,6 @@
 
 #include <lib/ac/stdio.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 
 #include <lib/bitmap/invert.h>
 #include <lib/bitmap/raw.h>
@@ -37,7 +35,7 @@ pedantic_size_warning(const char *filename)
 {
     if (width != 320 || height != 240)
     {
-        explain_output_warning
+        printf
         (
             "%s: the image --size=%dx%d is not strictly correct, "
                 "UCSD Pascal foto files are of --size=320x240",
@@ -90,7 +88,7 @@ png_to_foto(const char *ifn, const char *ofn)
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_foto";
     fprintf(stderr, "Usage: %s [ <option>... ] -d <foto> <png>\n", prog);
     fprintf(stderr, "Usage: %s [ <option>... ] -e <png> <foto>\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
@@ -101,7 +99,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_option_hanging_indent_set(4);
     char action = 0;
     for (;;)
     {
@@ -140,39 +137,43 @@ main(int argc, char **argv)
                 int h = 0;
                 if (2 != sscanf(optarg, "%dx%d", &w, &h))
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "the string %s does not look like a size",
                         rcstring(optarg).quote_c().c_str()
                     );
+                    exit(1);
                 }
                 if (w & 7)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "the width (%d) is not a multiple of 8 (r=%d)",
                         w,
                         (w & 7)
                     );
+                    exit(1);
                 }
                 if (w < 8 || h < 1)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "the --size=%dx%d is too small",
                         w,
                         h
                     );
+                    exit(1);
                 }
                 if (w * h >= 65536 * 8)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "the --size=%dx%d is too large for the image to "
                             "fit in a UCSD Pascal system's memory; aborting",
                         w,
                         h
                     );
+                    exit(1);
                 }
                 width = w;
                 height = h;
@@ -189,7 +190,7 @@ main(int argc, char **argv)
     }
     if (!action)
     {
-        explain_output_error
+        printf
         (
             "you must specify either --encode or --decode on the "
             "command line"
@@ -198,7 +199,7 @@ main(int argc, char **argv)
     }
     if (optind + 2 != argc)
     {
-        explain_output_error
+        printf
         (
             "you must name both an input file and an output file on the "
             "command line"

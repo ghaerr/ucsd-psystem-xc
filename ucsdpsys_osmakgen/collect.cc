@@ -16,11 +16,9 @@
 // with this program. If not, see <http://www.gnu.org/licenses/>
 //
 
+#include <stdio.h>
 #include <lib/config.h>
 #include <lib/ac/string.h>
-#include <libexplain/fgets.h>
-#include <libexplain/pclose.h>
-#include <libexplain/popen.h>
 
 #include <ucsdpsys_osmakgen/collect.h>
 
@@ -28,11 +26,11 @@
 void
 collect_output_of(const rcstring &command, rcstring_list &result)
 {
-    FILE *fp = explain_popen_or_die(command.c_str(), "r");
+    FILE *fp = popen(command.c_str(), "r");
     for (;;)
     {
         char line[2000];
-        if (!explain_fgets_or_die(line, sizeof(line), fp))
+        if (!fgets(line, sizeof(line), fp))
             break;
         size_t len = strlen(line);
         if (len > 0 && line[len - 1] == '\n')
@@ -40,7 +38,7 @@ collect_output_of(const rcstring &command, rcstring_list &result)
         if (len > 0)
             result.push_back(line);
     }
-    explain_pclose_success_or_die(fp);
+    pclose(fp);
 }
 
 

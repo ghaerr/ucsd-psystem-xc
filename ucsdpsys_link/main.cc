@@ -24,11 +24,6 @@
 #include <lib/ac/vector>
 #include <lib/ac/getopt.h>
 #include <unistd.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 
 #include <lib/byte_sex.h>
 #include <lib/codefile/file.h>
@@ -155,18 +150,19 @@ build_file_list(const rcstring_list &filenames)
 
         if (p->get_byte_sex() != hostfile->get_byte_sex())
         {
-            explain_output_error
+            printf
             (
                 "codefile %s: library file byte sex %s...",
                 fname.quote_c().c_str(),
                 byte_sex_name(p->get_byte_sex()).c_str()
             );
-            explain_output_error_and_die
+            printf
             (
                 "codefile %s: ... mismatch with host file byte sex %s",
                 hostfile->get_filename().quote_c().c_str(),
                 byte_sex_name(hostfile->get_byte_sex()).c_str()
             );
+            exit(1);
         }
 
         libfiles.push_back(p);
@@ -197,12 +193,13 @@ check_hostsp(const segrec::pointer &sp)
             codefile::pointer fp = unit_search(sp->get_src_segname(), segnum);
             if (!fp)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "codefile %s: unit %s not found",
                     sp->get_src_filename().quote_c().c_str(),
                     sp->get_src_segname().quote_c().c_str()
                 );
+                exit(1);
             }
             sp->set_srcfile(fp, segnum);
         }
@@ -212,20 +209,21 @@ check_hostsp(const segrec::pointer &sp)
     case LINKED_INTRINS:
         if (hostsp)
         {
-            explain_output_error
+            printf
             (
                 "codefile %s, segment %s: duplicate host "
                     "segment ...",
                 sp->get_src_filename().quote_c().c_str(),
                 sp->get_src_segname().quote_c().c_str()
             );
-            explain_output_error_and_die
+            printf
             (
                 "codefile %s, segment %s: ... here is the "
                     "first definition",
                 hostsp->get_src_filename().quote_c().c_str(),
                 hostsp->get_src_segname().quote_c().c_str()
             );
+            exit(1);
         }
         else
         {
@@ -358,12 +356,13 @@ add_unit(const rcstring &name)
         {
             if (nextseg >= maxseg1)
             {
-                explain_output_error_and_die
+                printf
                 (
                     // FIXME: the output file's name, not the input!
                     "%s: no room in output segment dictionary",
                     fp->get_filename().c_str()
                 );
+                exit(1);
             }
 
             segrec::pointer sp = segrec::create(fp, sp1);
@@ -465,7 +464,7 @@ read_link_info(const segrec::pointer &sp, const set &oktypes)
             validate(ep);
         else
         {
-            explain_output_error_and_die
+            printf
             (
                 "codefile %s, segment %s, symbol %s: invalid list info "
                     "type (%s)",
@@ -474,6 +473,7 @@ read_link_info(const segrec::pointer &sp, const set &oktypes)
                 ep->get_name().quote_c().c_str(),
                 link_info_type_name(ep->get_litype()).c_str()
             );
+            exit(1);
         }
 
         if (dumpseps)
@@ -523,7 +523,7 @@ build_places(const segrec::pointer &sp)
 
     if (cp[nbytes - 2] != sp->get_segment_number())
     {
-        explain_output_error_and_die
+        printf
         (
             "codefile %s, segment %s: procedure dictionary has wrong segment "
                 "number (has %d, expected %d)",
@@ -532,18 +532,20 @@ build_places(const segrec::pointer &sp)
             cp[nbytes - 2],
             sp->get_segment_number()
         );
+        exit(1);
     }
 
     int nprocs = cp[nbytes - 1];
     if (nprocs > maxproc)
     {
-        explain_output_error_and_die
+        printf
         (
             "codefile %s, segment %s: procedure dictionary too long (%d)",
             sp->get_src_filename().quote_c().c_str(),
             sp->get_src_segname().quote_c().c_str(),
             nprocs
         );
+        exit(1);
     }
 
     //
@@ -581,7 +583,7 @@ build_places(const segrec::pointer &sp)
         case SEPFUNC:
             if (ep->get_srcproc() <= 0 || ep->get_srcproc() > nprocs)
             {
-                explain_output_error_and_die
+                printf
                 (
                     "codefile %s, segment %s: symtab %s: procedure number %d "
                         "is not in the range 1..%d",
@@ -591,6 +593,7 @@ build_places(const segrec::pointer &sp)
                     ep->get_srcproc(),
                     nprocs
                 );
+                exit(1);
             }
             else
             {
@@ -601,7 +604,7 @@ build_places(const segrec::pointer &sp)
                 int offset = fetch_word(cp, i);
                 if ((offset & 1) || offset == 0 || offset >= i)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "codefile %s, segment %s, symbol %s, procedure "
                             "number %d: the procedure dictionary pointer "
@@ -612,12 +615,13 @@ build_places(const segrec::pointer &sp)
                         ep->get_srcproc(),
                         offset
                     );
+                    exit(1);
                 }
                 i -= offset;
                 int check_procnum = cp[i];
                 if (check_procnum != ep->get_srcproc() && check_procnum != 0)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "codefile %s, segment %s, symbol %s, procedure number "
                             "%d: the jump table has the wrong procedure number "
@@ -628,6 +632,7 @@ build_places(const segrec::pointer &sp)
                         ep->get_srcproc(),
                         check_procnum
                     );
+                    exit(1);
                 }
                 else
                 {
@@ -642,7 +647,7 @@ build_places(const segrec::pointer &sp)
                         j > maxic
                     )
                     {
-                        explain_output_error_and_die
+                        printf
                         (
                             "codefile %s, segment %s, symbol %s, "
                                 "procedure number %d: procedure placement "
@@ -654,6 +659,7 @@ build_places(const segrec::pointer &sp)
                             ep->place.srcbase,
                             j
                         );
+                        exit(1);
                     }
                     else
                     {
@@ -862,7 +868,8 @@ find_and_add(segrec::symbol_table_t &symtab, int pnum, workrec_list_t &uprocs)
     workrec::pointer wp = procsrch3(symtab, pnum, uprocs);
     if (!wp)
     {
-        explain_output_error_and_die("missing proc %d", pnum);
+        printf("missing proc %d", pnum);
+        exit(1);
     }
     return wp;
 }
@@ -1052,7 +1059,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                 codefile::pointer fp = unit_search(wp->refsym->get_name(), seg);
                 if (!fp)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "codefile %s, segment %s: unit %s not found",
                         wp->refsym->origin->get_src_filename().
@@ -1061,6 +1068,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                             quote_c().c_str(),
                         wp->refsym->get_name().quote_c().c_str()
                     );
+                    exit(1);
                 }
                 else if (fp == hostfile)
                 {
@@ -1136,7 +1144,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                         );
                     if (wp->defsym->get_nparams() != np)
                     {
-                        explain_output_error_and_die
+                        printf
                         (
                             "codefile %s, segment %s, procedure %s: parameter "
                                 "mismatch (def %d != ref %d)",
@@ -1148,6 +1156,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                             wp->defsym->get_nparams(),
                             np
                         );
+                        exit(1);
                     }
                 }
             }
@@ -1173,7 +1182,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                         );
                     if (wp->defsym->get_nparams() != np)
                     {
-                        explain_output_error_and_die
+                        printf
                         (
                             "codefile %s, segment %s, function %s: parameter "
                                 "mismatch (def %d != ref %d)",
@@ -1185,6 +1194,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                             wp->defsym->get_nparams(),
                             np
                         );
+                        exit(1);
                     }
                 }
             }
@@ -1193,7 +1203,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
 
         if (!wp->defsym)
         {
-            explain_output_error_and_die
+            printf
             (
                 "codefile %s, segment %s: %s %s undefined",
                 wp->refsym->origin->get_src_filename().quote_c().c_str(),
@@ -1201,6 +1211,7 @@ resolve(workrec_list_t &inlist, workrec_list_t &outlist)
                 link_info_type_name(wp->refsym->get_litype()).c_str(),
                 wp->refsym->get_name().quote_c().c_str()
             );
+            exit(1);
         }
         else
         {
@@ -1540,7 +1551,7 @@ phase3(const rcstring &fname, const rcstring &mapname, const rcstring &notice)
         if (mapname == "-")
             map = stdout;
         else
-            map = explain_fopen_or_die(mapname.c_str(), "w");
+            map = fopen(mapname.c_str(), "w");
         fprintf(map, "Link map for ");
         if (hostsp)
             fprintf(map, "%s", hostsp->get_src_segname().quote_c().c_str());
@@ -1572,9 +1583,9 @@ phase3(const rcstring &fname, const rcstring &mapname, const rcstring &notice)
         if (hostsp)
             fprintf(map, "\nNext base LC = %d\n", nextbaselc);
         if (map == stdout)
-            explain_fflush_or_die(map);
+            fflush(map);
         else
-            explain_fclose_or_die(map);
+            fclose(map);
     }
     DEBUG(1, "}");
 }
@@ -1583,7 +1594,7 @@ phase3(const rcstring &fname, const rcstring &mapname, const rcstring &notice)
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_link";
     fprintf(stderr, "Usage: %s [ <option>... ] <filename>...\n", prog);
     fprintf(stderr, "       %s --version\n", prog);
     exit(1);
@@ -1593,8 +1604,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     rcstring output_file_name;
     rcstring map_file_name;
     rcstring notice;
@@ -1658,8 +1667,10 @@ main(int argc, char **argv)
     if (filenames.empty())
         usage();
 
-    if (output_file_name.empty())
-        explain_output_error_and_die("no --output file specified");
+    if (output_file_name.empty()) {
+        printf("no --output file specified");
+        exit(1);
+    }
 
     //
     // The linker is made up of three phases:

@@ -16,14 +16,10 @@
 // with this program. If not, see <http://www.gnu.org/licenses/>
 //
 
+#include <stdlib.h>
 #include <lib/ac/stdarg.h>
 #include <lib/ac/stdio.h>
 #include <lib/ac/string.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
 
 #include <lib/endof.h>
 #include <lib/rcstring.h>
@@ -54,14 +50,16 @@ parse_error(const char *fmt, ...)
     vsnprintf(buffer, sizeof(buffer), fmt, ap);
     va_end(ap);
 
-    explain_output_error_and_die("%s: %d: %s", ifn.c_str(), linum, buffer);
+    printf("%s: %d: %s", ifn.c_str(), linum, buffer);
+    exit(1);
 }
 
 
 static void
 syntax_error(void)
 {
-    explain_output_error_and_die("%s: %d: syntax error", ifn.c_str(), linum);
+    printf("%s: %d: syntax error", ifn.c_str(), linum);
+    exit(1);
 }
 
 
@@ -89,7 +87,7 @@ static rcstring token_value_string;
 static int
 lex_getc()
 {
-    int c = explain_getc_or_die(ifp);
+    int c = getc(ifp);
     if (c == '\n')
         ++linum;
     return c;
@@ -341,7 +339,7 @@ encode(const rcstring &infile, const rcstring &outfile)
     if (stdio_stream(ifn))
         ifn = "stdin";
     else
-        ifp = explain_fopen_or_die(ifn.c_str(), "r");
+        ifp = fopen(ifn.c_str(), "r");
     linum = 1;
     int used[256];
     for (int j = 0; j < 256; ++j)
@@ -410,12 +408,12 @@ encode(const rcstring &infile, const rcstring &outfile)
         ofn = "stdout";
     else
     {
-        ofp = explain_fopen_or_die(ofn.c_str(), "wb");
+        ofp = fopen(ofn.c_str(), "wb");
     }
     fwrite(data, 1, size, ofp);
-    explain_fflush_or_die(ofp);
+    fflush(ofp);
     if (ofp != stdout)
-        explain_fclose_or_die(ofp);
+        fclose(ofp);
 }
 
 

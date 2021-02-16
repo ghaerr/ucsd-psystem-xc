@@ -19,14 +19,6 @@
 #include <lib/ac/ctype.h>
 #include <lib/ac/stdio.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/getc.h>
-#include <libexplain/output.h>
-#include <libexplain/putc.h>
-#include <libexplain/program_name.h>
-#include <libexplain/rename.h>
 #include <unistd.h>
 
 #include <lib/codefile.h>
@@ -38,7 +30,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsd_downcase";
     fprintf(stderr, "Usage: %s [ <option>... ] <filename>...\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -50,51 +42,51 @@ convert(FILE *ifp, FILE *ofp)
 {
     for (;;)
     {
-        int c = explain_getc_or_die(ifp);
+        int c = getc(ifp);
         if (c == EOF)
             break;
         switch (c)
         {
         case '{':
             // comment
-            explain_putc_or_die(c, ofp);
+            putc(c, ofp);
             for (;;)
             {
-                c = explain_getc_or_die(ifp);
+                c = getc(ifp);
                 if (c == EOF)
                     break;
-                explain_putc_or_die(c, ofp);
+                putc(c, ofp);
                 if (c == '}')
                     break;
             }
             break;
 
         case '(':
-            explain_putc_or_die(c, ofp);
-            c = explain_getc_or_die(ifp);
+            putc(c, ofp);
+            c = getc(ifp);
             if (c != '*')
             {
                 if (c != EOF)
                     ungetc(c, ifp);
                 break;
             }
-            explain_putc_or_die(c, ofp);
+            putc(c, ofp);
 
             // comment
             for (;;)
             {
-                c = explain_getc_or_die(ifp);
+                c = getc(ifp);
                 if (c == EOF)
                     break;
-                explain_putc_or_die(c, ofp);
+                putc(c, ofp);
                 if (c == '*')
                 {
-                    c = explain_getc_or_die(ifp);
+                    c = getc(ifp);
                     if (c == EOF)
                         break;
                     if (c == ')')
                     {
-                        explain_putc_or_die(c, ofp);
+                        putc(c, ofp);
                         break;
                     }
                     ungetc(c, ifp);
@@ -104,23 +96,23 @@ convert(FILE *ifp, FILE *ofp)
 
         case '\'':
             // string constant
-            explain_putc_or_die(c, ofp);
+            putc(c, ofp);
             for (;;)
             {
-                c = explain_getc_or_die(ifp);
+                c = getc(ifp);
                 if (c == EOF)
                     break;
-                explain_putc_or_die(c, ofp);
+                putc(c, ofp);
                 if (c == '\'')
                 {
-                    c = explain_getc_or_die(ifp);
+                    c = getc(ifp);
                     if (c != '\'')
                     {
                         if (c != EOF)
                             ungetc(c, ifp);
                         break;
                     }
-                    explain_putc_or_die(c, ofp);
+                    putc(c, ofp);
                 }
             }
             break;
@@ -133,7 +125,7 @@ convert(FILE *ifp, FILE *ofp)
             // fall through...
 
         default:
-            explain_putc_or_die(c, ofp);
+            putc(c, ofp);
             break;
         }
     }
@@ -144,21 +136,19 @@ static void
 convert(const rcstring &ifn)
 {
     rcstring ofn = ifn + ".new";
-    FILE  *ifp = explain_fopen_or_die(ifn.c_str(), "r");
-    FILE  *ofp = explain_fopen_or_die(ofn.c_str(), "w");
+    FILE  *ifp = fopen(ifn.c_str(), "r");
+    FILE  *ofp = fopen(ofn.c_str(), "w");
     convert(ifp, ofp);
-    explain_fclose_or_die(ofp);
-    explain_fclose_or_die(ifp);
+    fclose(ofp);
+    fclose(ifp);
 
-    explain_rename_or_die(ofn.c_str(), ifn.c_str());
+    rename(ofn.c_str(), ifn.c_str());
 }
 
 
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     for (;;)
     {
         static const struct option options[] =
@@ -182,7 +172,7 @@ main(int argc, char **argv)
     if (optind >= argc)
     {
         convert(stdin, stdout);
-        explain_fflush_or_die(stdout);
+        fflush(stdout);
     }
     else
     {

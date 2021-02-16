@@ -19,9 +19,6 @@
 #include <lib/config.h>
 #include <lib/ac/string.h>
 #include <dirent.h>
-#include <libexplain/opendir.h>
-#include <libexplain/readdir.h>
-#include <libexplain/closedir.h>
 
 #include <lib/read_whole_directory.h>
 
@@ -29,16 +26,16 @@
 void
 read_whole_directory(const rcstring &path, rcstring_list &result)
 {
-    DIR *dp = explain_opendir_or_die(path.c_str());
+    DIR *dp = opendir(path.c_str());
     for (;;)
     {
-        dirent *dep = explain_readdir_or_die(dp);
+        dirent *dep = readdir(dp);
         if (!dep)
             break;
         if (strcmp(dep->d_name, ".") && strcmp(dep->d_name, ".."))
             result.push_back(dep->d_name);
     }
-    explain_closedir_or_die(dp);
+    closedir(dp);
 }
 
 

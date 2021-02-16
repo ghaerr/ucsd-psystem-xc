@@ -18,7 +18,6 @@
 
 #include <lib/ac/ctype.h>
 #include <lib/ac/string.h>
-#include <libexplain/output.h>
 #include <lib/ac/list>
 #include <unistd.h>
 
@@ -235,13 +234,14 @@ lex_close(void)
     }
     if (number_of_errors)
     {
-        explain_output_error_and_die
+        printf
         (
             "%s: found %s fatal error%s",
             src->get_file_name().c_str(),
             cardinal(number_of_errors).c_str(),
             (number_of_errors == 1 ? "" : "s")
         );
+        exit(1);
     }
     delete src;
     src = 0;
@@ -1271,7 +1271,7 @@ lex_error(const location &locn, const char *fmt, ...)
     va_start(ap, fmt);
     rcstring msg = rcstring::vprintf(fmt, ap);
     va_end(ap);
-    explain_output_error("%s: %s", locn.representation().c_str(), msg.c_str());
+    printf("%s: %s", locn.representation().c_str(), msg.c_str());
     ++number_of_errors;
 
     output::pointer op =
@@ -1288,7 +1288,7 @@ lex_message(const location &locn, const char *fmt, ...)
     va_start(ap, fmt);
     rcstring msg = rcstring::vprintf(fmt, ap);
     va_end(ap);
-    explain_output_error("%s: %s", locn.representation().c_str(), msg.c_str());
+    printf("%s: %s", locn.representation().c_str(), msg.c_str());
 
     output::pointer op =
         output_filter_prefix::create(assembler::get_source_column(), "print: ");
@@ -1304,7 +1304,7 @@ lex_warning(const char *fmt, ...)
     va_start(ap, fmt);
     rcstring msg = rcstring::vprintf(fmt, ap);
     va_end(ap);
-    explain_output_error
+    printf
     (
         "%s: warning: %s",
         lex_location().representation().c_str(),
@@ -1325,7 +1325,7 @@ grammar_error(const char *fmt, ...)
     va_start(ap, fmt);
     rcstring msg = rcstring::vprintf(fmt, ap);
     va_end(ap);
-    explain_output_error
+    printf
     (
         "%s: %s",
         location_of_most_recent_token.representation().c_str(),
@@ -1342,7 +1342,7 @@ grammar_warning(const char *fmt, ...)
     va_start(ap, fmt);
     rcstring msg = rcstring::vprintf(fmt, ap);
     va_end(ap);
-    explain_output_error
+    printf
     (
         "%s: warning: %s",
         location_of_most_recent_token.representation().c_str(),
@@ -1376,7 +1376,7 @@ lex_trace_print(void *, const char *fmt, ...)
         if (!ep)
             return;
         len = ep - buffer;
-        explain_output_error
+        printf
         (
             "%s: %d: %.*s",
             src->is->name().c_str(),

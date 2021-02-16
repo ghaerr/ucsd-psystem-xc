@@ -17,8 +17,6 @@
 //
 
 #include <lib/ac/stdio.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fwrite.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -72,7 +70,7 @@ output_stdout::filename()
 void
 output_stdout::write_inner(const void *data, size_t len)
 {
-    explain_fwrite_or_die(data, 1, len, stdout);
+    fwrite(data, 1, len, stdout);
     if (len > 0)
         bol = (((const char *)data)[len - 1] == '\n');
     pos += len;
@@ -82,7 +80,7 @@ output_stdout::write_inner(const void *data, size_t len)
 void
 output_stdout::flush_inner()
 {
-    explain_fflush_or_die(stdout);
+    fflush(stdout);
 }
 
 

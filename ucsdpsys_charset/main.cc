@@ -20,8 +20,6 @@
 #include <lib/ac/stdio.h>
 #include <lib/ac/stdlib.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
 #include <unistd.h>
 
 #include <lib/version.h>
@@ -37,7 +35,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys_charset";
     fprintf(stderr, "Usage: %s -d [ <infile> [ <outfile> ]]\n", prog);
     fprintf(stderr, "       %s -e [ <infile> [ <outfile> ]]\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
@@ -48,8 +46,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     arch::pointer ap;
     char action = 0;
     rcstring input_format_name;
@@ -134,10 +130,11 @@ main(int argc, char **argv)
         ap = arch::factory_by_host("klebsch");
     if (!action)
     {
-        explain_output_error_and_die
+        printf
         (
             "you must specify either --encode or --decode on the command line"
         );
+        exit(1);
     }
 
     rcstring ifn = "-";
@@ -199,20 +196,22 @@ main(int argc, char **argv)
     case 'e':
         if (ifp->is_binary() && input_format_name.empty())
         {
-            explain_output_error_and_die
+            printf
             (
                 "the --encode option looks incorrect in this context"
             );
+            exit(1);
         }
         break;
 
     case 'd':
         if (!ifp->is_binary() && output_format_name.empty())
         {
-            explain_output_error_and_die
+            printf
             (
                 "the --decode option looks incorrect in this context"
             );
+            exit(1);
         }
         break;
     }

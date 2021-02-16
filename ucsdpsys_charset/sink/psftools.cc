@@ -17,9 +17,6 @@
 //
 
 #include <lib/ac/stdio.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fputc.h>
 
 #include <lib/sizeof.h>
 
@@ -70,7 +67,7 @@ sink_psftools::write_whole_font_end(void)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "w")
+            fopen(filename.c_str(), "w")
         );
 
     fprintf(fp, "%%PSF2\n");
@@ -127,13 +124,13 @@ sink_psftools::write_whole_font_end(void)
                 {
                     bool pixel = (0 != (p[x >> 3] & (1 << (x & 7))));
                     char c = (pixel ? '#' : '-');
-                    explain_fputc_or_die(c, fp);
+                    fputc(c, fp);
                 }
             }
             fprintf(fp, "\nUnicode: [%04X];\n", gp->get_number());
         }
     }
-    explain_fclose_or_die(fp);
+    fclose(fp);
 }
 
 

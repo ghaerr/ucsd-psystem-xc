@@ -17,7 +17,6 @@
 //
 
 #include <lib/ac/stdio.h>
-#include <libexplain/output.h>
 
 #include <lib/fstrcmp.h>
 #include <lib/sizeof.h>
@@ -57,12 +56,13 @@ arch::factory_by_mtype(mtype_t mtype)
         if (tp->mtype == mtype)
             return tp->create();
     }
-    explain_output_error_and_die
+    printf
     (
         "the %s architecture is known, but it is not yet supported by the "
             "assembler",
         mtype_name(mtype).c_str()
     );
+    exit(1);
 }
 
 
@@ -75,18 +75,20 @@ arch::factory_by_arch(const rcstring &arch_name)
         m = mtype_from_name_fuzzy(arch_name);
         if (m != mtype_undefined)
         {
-            explain_output_error_and_die
+            printf
             (
                 "architecture %s unknown, did you mean %s instead?",
                 arch_name.quote_c().c_str(),
                 mtype_name(m).downcase().quote_c().c_str()
             );
+            exit(1);
         }
-        explain_output_error_and_die
+        printf
         (
             "architecture %s unknown",
             arch_name.quote_c().c_str()
         );
+        exit(1);
     }
     return factory_by_mtype(m);
 }
@@ -98,11 +100,12 @@ arch::factory_by_host(const rcstring &host_name)
     mtype_t m = mtype_from_host(host_name);
     if (m == mtype_undefined)
     {
-        explain_output_error_and_die
+        printf
         (
             "host %s unknown",
             host_name.quote_c().c_str()
         );
+        exit(1);
     }
     return factory_by_mtype(m);
 }

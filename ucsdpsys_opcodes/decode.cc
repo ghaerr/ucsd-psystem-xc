@@ -20,11 +20,6 @@
 #include <lib/ac/string.h>
 #include <lib/ac/stdlib.h>
 #include <lib/ac/time.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fread.h>
-#include <libexplain/output.h>
 
 #include <lib/endof.h>
 #include <lib/rcstring.h>
@@ -61,7 +56,7 @@ print_table(const unsigned char *buffer, const rcstring &ofn)
     FILE *ofp = stdout;
     if (!stdio_name(ofn))
     {
-        ofp = explain_fopen_or_die(ofn.c_str(), "w");
+        ofp = fopen(ofn.c_str(), "w");
     }
 
     for (size_t k = 0; k < 256; ++k)
@@ -77,12 +72,13 @@ print_table(const unsigned char *buffer, const rcstring &ofn)
         unsigned x = two_byte_decode(ttp);
         if (x >= SIZEOF(optype))
         {
-            explain_output_error_and_die
+            printf
             (
                 "opcode %u: type %u out of range",
                 (unsigned)k,
                 x
             );
+            exit(1);
         }
 
         const char *tname = optype[x];
@@ -99,9 +95,9 @@ print_table(const unsigned char *buffer, const rcstring &ofn)
         }
         fprintf(ofp, ";\n");
     }
-    explain_fflush_or_die(ofp);
+    fflush(ofp);
     if (ofp != stdout)
-        explain_fclose_or_die(ofp);
+        fclose(ofp);
 }
 
 
@@ -138,23 +134,24 @@ decode(const rcstring &ifn, const rcstring &ofn)
 {
     FILE *ifp = stdin;
     if (!stdio_name(ifn))
-        ifp = explain_fopen_or_die(ifn.c_str(), "r");
+        ifp = fopen(ifn.c_str(), "r");
 
     size_t size = (256 - 52) * 8 + 256 * 2;
     unsigned char *buffer = new unsigned char [size];
-    size_t n = explain_fread_or_die(buffer, 1, size, ifp);
+    size_t n = fread(buffer, 1, size, ifp);
     if (n == 0)
     {
-        explain_output_error_and_die
+        printf
         (
             "read %s: expected %ld, but got %ld",
             ifn.quote_c().c_str(),
             (long)n,
             (long)size
         );
+        exit(1);
     }
     if (ifp != stdin)
-        explain_fclose_or_die(ifp);
+        fclose(ifp);
 
     print_table(buffer, ofn);
     delete [] buffer;

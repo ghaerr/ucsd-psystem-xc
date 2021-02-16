@@ -21,10 +21,6 @@
 #include <lib/ac/stdlib.h>
 #include <lib/ac/sys/stat.h>
 #include <lib/ac/getopt.h>
-#include <libexplain/getcwd.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
-#include <libexplain/system.h>
 #include <unistd.h>
 
 #include <lib/libdir.h>
@@ -39,7 +35,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdpsys";
     fprintf(stderr, "Usage: %s [ <option>... ]\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -49,11 +45,12 @@ usage(void)
 static void
 needs_string(const char *opt)
 {
-    explain_output_error_and_die
+    printf
     (
         "the %s option needs a non-empty string parameter",
         opt
     );
+    exit(1);
 }
 
 
@@ -102,7 +99,7 @@ name_from_dir(const rcstring &arg)
                 return "work";
             used_dot = true;
             char buf[2000];
-            explain_getcwd_or_die(buf, sizeof(buf));
+            getcwd(buf, sizeof(buf));
             path = buf;
             continue;
         }
@@ -117,8 +114,6 @@ name_from_dir(const rcstring &arg)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     rcstring_list system_volume_dirs;
     rcstring host = "klebsch";
     rcstring architecture;
@@ -262,11 +257,12 @@ main(int argc, char **argv)
         mtype_t m = mtype_from_host(host);
         if (m == mtype_undefined)
         {
-            explain_output_error_and_die
+            printf
             (
                 "host %s unknown",
                 host.quote_c().c_str()
             );
+            exit(1);
         }
         architecture = mtype_name(m).downcase();
     }
@@ -277,7 +273,7 @@ main(int argc, char **argv)
     //
     if (volumes->empty())
     {
-        explain_output_warning
+        printf
         (
             "no volumes named on the command line; assuming you meant "
             "\"-f .\" which uses the contents of the current directory "
@@ -374,12 +370,13 @@ main(int argc, char **argv)
         }
         if (path.empty())
         {
-            explain_output_error_and_die
+            printf
             (
                 "unable to locate a directory containing system files, "
                     "looked in %s",
                 system_volume_dirs.unsplit(", ").c_str()
             );
+            exit(1);
         }
 
         // we always want this as volume #5:
@@ -390,12 +387,13 @@ main(int argc, char **argv)
         // "system.pascal" file, otherwise we can't boot.
         if (!svp->contains_system_pascal())
         {
-            explain_output_error_and_die
+            printf
             (
                 "none of the system directories contain a \"system.pascal\" "
                     "file, looked in %s",
                 path.unsplit(", ").c_str()
             );
+            exit(1);
         }
     }
 
@@ -415,10 +413,11 @@ main(int argc, char **argv)
     //
     if (!volumes->contains_system_pascal())
     {
-        explain_output_error_and_die
+        printf
         (
             "none of the supplied volumes contain a \"system.pascal\" file"
         );
+        exit(1);
     }
 
     //
@@ -426,8 +425,8 @@ main(int argc, char **argv)
     //
     command.push_front("ucsdpsys_vm");
     rcstring s = command.unsplit();
-    explain_output_message(s.c_str());
-    explain_system_success_or_die(s.c_str());
+    printf("%s", s.c_str());
+    system(s.c_str());
 
     //
     // unslurp the temporary volumes

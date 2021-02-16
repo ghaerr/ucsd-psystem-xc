@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/output.h>
 
 #include <lib/rcstring/accumulator.h>
 
@@ -87,11 +86,12 @@ language_pascal::next_token(void)
                 c = lex_getc();
                 if (c == '\n' || c == EOF)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "%s: unterminated string",
                         token_start.representation().c_str()
                     );
+                    exit(1);
                 }
                 if (c == '\'')
                 {
@@ -113,11 +113,12 @@ language_pascal::next_token(void)
                 c = lex_getc();
                 if (c == EOF)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "%s: unterminated { comment }",
                         token_start.representation().c_str()
                     );
+                    exit(1);
                 }
                 if (c == '}')
                     break;
@@ -142,11 +143,12 @@ language_pascal::next_token(void)
                     c = lex_getc();
                     if (c == EOF)
                     {
-                        explain_output_error_and_die
+                        printf
                         (
                             "%s: unterminated (* comment *)",
                             token_start.representation().c_str()
                         );
+                        exit(1);
                     }
                     ac.push_back((char)c);
                     if (c == '*')
@@ -157,11 +159,12 @@ language_pascal::next_token(void)
                     c = lex_getc();
                     if (c == EOF)
                     {
-                        explain_output_error_and_die
+                        printf
                         (
                             "%s: unterminated (* comment *)",
                             token_start.representation().c_str()
                         );
+                        exit(1);
                     }
                     ac.push_back((char)c);
                     if (c != '*')

@@ -17,20 +17,13 @@
 //
 
 #include <lib/ac/sys/stat.h>
-#include <libexplain/fclose.h>
-#include <libexplain/fflush.h>
-#include <libexplain/fopen.h>
-#include <libexplain/fputc.h>
-#include <libexplain/fseek.h>
-#include <libexplain/fstat.h>
-#include <libexplain/fwrite.h>
 
 #include <ucsdpsys_charset/sink/terak.h>
 
 
 sink_terak::~sink_terak()
 {
-    explain_fclose_or_die(fp);
+    fclose(fp);
     fp = 0;
 }
 
@@ -58,7 +51,7 @@ sink_terak::create(const rcstring &filename)
         ?
             stdout
         :
-            explain_fopen_or_die(filename.c_str(), "wb")
+            fopen(filename.c_str(), "wb")
         );
     return pointer(new sink_terak(fp));
 }
@@ -69,7 +62,7 @@ filesize(FILE *fp)
 {
     int fd = fileno(fp);
     struct stat st;
-    explain_fstat_or_die(fd, &st);
+    fstat(fd, &st);
     ssize_t big = ((size_t)1 << 15);
     return (st.st_size < big ? st.st_size : big);
 }
@@ -83,8 +76,8 @@ sink_terak::write_whole_font_begin(void)
     {
         // establish the file length.
         // all the skipped bytes will be 0x00.
-        explain_fseek_or_die(fp, 2047, SEEK_SET);
-        explain_fputc_or_die(0x00, fp);
+        fseek(fp, 2047, SEEK_SET);
+        fputc(0x00, fp);
         rewind(fp);
     }
 }
@@ -108,9 +101,9 @@ sink_terak::write_one_glyph(const glyph::pointer &gp0)
 
     assert(gp->get_width() == 8);
     assert(gp->get_height() == 10);
-    explain_fseek_or_die(fp, pos, SEEK_SET);
+    fseek(fp, pos, SEEK_SET);
 
-    explain_fwrite_or_die
+    fwrite
     (
         gp->get_row(0),
         gp->get_row_bytes(),
@@ -123,16 +116,16 @@ sink_terak::write_one_glyph(const glyph::pointer &gp0)
 void
 sink_terak::write_whole_font_end(void)
 {
-    explain_fflush_or_die(fp);
+    fflush(fp);
 }
 
 
 bool
 sink_terak::put_boot_logo(const unsigned char *data)
 {
-    explain_fseek_or_die(fp, 0x800, SEEK_SET);
-    explain_fwrite_or_die(data, 1, 512, fp);
-    explain_fflush_or_die(fp);
+    fseek(fp, 0x800, SEEK_SET);
+    fwrite(data, 1, 512, fp);
+    fflush(fp);
     return true;
 }
 

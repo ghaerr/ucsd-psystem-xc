@@ -20,9 +20,6 @@
 #include <lib/ac/string.h>
 #include <lib/ac/getopt.h>
 #include <unistd.h>
-#include <libexplain/output.h>
-#include <libexplain/program_name.h>
-#include <libexplain/rename.h>
 
 #include <lib/codefile/file.h>
 #include <lib/codefile/filter/insert.h>
@@ -41,7 +38,7 @@
 static void
 usage(void)
 {
-    const char *prog = explain_program_name_get();
+    const char *prog = "ucsdsys_librarian";
     fprintf(stderr, "Usage: %s [ <option>... ] <filename>...\n", prog);
     fprintf(stderr, "       %s -V\n", prog);
     exit(1);
@@ -51,7 +48,8 @@ usage(void)
 static void
 must_use_file_option_first(void)
 {
-    explain_output_error_and_die("you must use the --file option first");
+    printf("you must use the --file option first");
+    exit(1);
 }
 
 
@@ -88,8 +86,6 @@ is_a_number(const char *s, long &n)
 int
 main(int argc, char **argv)
 {
-    explain_program_name_set(argv[0]);
-    explain_option_hanging_indent_set(4);
     codefile::pointer infile;
     codefile::pointer alternate;
     bool emit_new_file = false;
@@ -128,10 +124,11 @@ main(int argc, char **argv)
             alternate = codefile_file::create(optarg);
             if (infile->get_byte_sex() != alternate->get_byte_sex())
             {
-                explain_output_error_and_die
+                printf
                 (
                     "all codefiles must have the same byte sex"
                 );
+                exit(1);
             }
             break;
 
@@ -153,10 +150,11 @@ main(int argc, char **argv)
             if (infile)
             {
                 too_many_file:
-                explain_output_error_and_die
+                printf
                 (
                     "you may only use one --file or --create option"
                 );
+                exit(1);
             }
             infile = codefile_file::create(optarg);
             break;
@@ -184,8 +182,10 @@ main(int argc, char **argv)
             break;
 
         case 'o':
-            if (!output_filename.empty())
-                explain_output_error_and_die("may only use --output once");
+            if (!output_filename.empty()) {
+                printf("may only use --output once");
+                exit(1);
+            }
             output_filename = optarg;
             break;
 
@@ -202,12 +202,13 @@ main(int argc, char **argv)
                     must_use_file_option_first();
                 if (!infile->get_segment_by_name(segname))
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "%s: segment %s unknown",
                         infile->get_filename().c_str(),
                         segname.quote_c().c_str()
                     );
+                    exit(1);
                 }
                 infile =
                     codefile_filter_remove_by_name::create(infile, segname);
@@ -242,11 +243,12 @@ main(int argc, char **argv)
                     must_use_file_option_first();
                 if (!alternate)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "you must use the --copy option before "
                             "the --segment option"
                     );
+                    exit(1);
                 }
 
                 //
@@ -263,19 +265,21 @@ main(int argc, char **argv)
                         long n = 0;
                         if (!is_a_number(eq + 1, n))
                         {
-                            explain_output_error_and_die
+                            printf
                             (
                                 "new segment number %s invalid",
                                 rcstring(eq + 1).quote_c().c_str()
                             );
+                            exit(1);
                         }
                         if (n < 0 || n >= 64)
                         {
-                            explain_output_error_and_die
+                            printf
                             (
                                 "new segment number %ld not in range 0..63",
                                 n
                             );
+                            exit(1);
                         }
                         segname = rcstring(s, eq - s);
                         segnum = n;
@@ -285,12 +289,13 @@ main(int argc, char **argv)
                 segment::pointer sp = alternate->get_segment_by_name(segname);
                 if (!sp)
                 {
-                    explain_output_error_and_die
+                    printf
                     (
                         "%s: segment %s unknown",
                         alternate->get_filename().c_str(),
                         segname.quote_c().c_str()
                     );
+                    exit(1);
                 }
                 if (segnum >= 0)
                     sp = segment_filter_renumber::create(sp, segnum);
@@ -336,7 +341,7 @@ main(int argc, char **argv)
                     "." + ifn.basename(".code") + ".tmp.code"
                 );
             cat(infile, output_filename);
-            explain_rename_or_die(output_filename.c_str(), ifn.c_str());
+            rename(output_filename.c_str(), ifn.c_str());
         }
         else
         {

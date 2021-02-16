@@ -17,7 +17,6 @@
 //
 
 #include <lib/config.h>
-#include <libexplain/system.h>
 
 #include <ucsdpsys/volume/file.h>
 
@@ -76,7 +75,7 @@ volume_file::contains_system_pascal(void)
     rcstring command =
         "ucsdpsys_disk --file " + path + " --list"
         "| grep -i system.pascal > /dev/null";
-    int n = explain_system_or_die(command.c_str());
+    int n = system(command.c_str());
     // grep exit status: 0 found a match,
     //                   1 no match,
     //                   2 all other errors.
@@ -94,7 +93,7 @@ volume_file::contains_system_files(void)
     // package, which knows how to grope volume images.
     //
     rcstring command = "ucsdpsys_disk --file " + path + " --system-volume";
-    int n = explain_system_or_die(command.c_str());
+    int n = system(command.c_str());
     // exit status: 0 found a match (no output),
     //              1 no match (no output),
     //              1 all other errors (with output).
